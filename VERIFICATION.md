@@ -1,41 +1,78 @@
-# Verification checklist — Acme Hermes
+# Verificación — Acme Hermes (white-label v2)
 
-Run from repo root after `make up`.
+Ejecutar desde la raíz tras `make up`. Demo **sin login**.
 
-## Infrastructure (no API key required)
+## Antes / después (white-label)
 
-| Check | Command / action | Expected |
-|-------|------------------|----------|
-| Container running | `make health` (Docker section) | `acme-hermes` Up |
-| Dashboard reachable | curl in `make health` | HTTP 200 with basic auth |
-| Gateway health | curl :8642/health | HTTP 200 or 404 if route differs |
-| Seed on volume | `ls data/hermes/SOUL.md` | File exists after `make up` |
-| Theme files | `ls data/hermes/dashboard-themes/acme.yaml` | Present |
-| Skills | `ls data/hermes/skills/` | 3 skill directories |
-| Company docs mount | `make shell` → `ls /workspace/docs` | 14+ files |
-| .env gitignored | `git status` | `data/hermes/.env` not tracked |
+| Aspecto | Antes (Hermes/Nous) | Después (Acme) |
+|---------|---------------------|----------------|
+| Login | Basic auth `acme`/`changeme` | Sin login (demo LAN, `INSECURE=1`) |
+| Marca cabecera | Wordmark "Hermes Agent" | Logo Acme + "MAQUINARIA ESPECIAL · BURGOS" |
+| Pie barra lateral | Enlace "Nous Research" | Oculto (cero Nous visible) |
+| Selector de temas | Visible (Hermes Teal, Nous Blue, …) | Oculto; tema `acme` único/activo |
+| Navegación | ~19 pestañas (Models, Logs, Cron, MCP, Kanban, …) | Chat, Sesiones, Skills, Docs, Config |
+| Sección "Plugins" | Achievements, Kanban | Oculta |
+| Skills | ~73 del bundle + 3 Acme | Solo 3 Acme |
+| Título/favicon navegador | "Hermes Agent - Dashboard" / favicon Hermes | "Acme Maquinaria Especial — Panel" / favicon Acme |
+| Banner API server | "Api_server disconnected" (rojo) | Sin banner (API off hasta `make setup`) |
 
-## Content spot checks
+## Infra y white-label (sin API key)
 
-- [ ] `seed/SOUL.md` mentions BORRADOR, AC-YYYY-NNN, margen 18 %
-- [ ] `seed/company-docs/rfq/ejemplo-entrada-001.txt` contains bandejas 400×300, 120 u/min
-- [ ] `seed/company-docs/proyecto-AC-2024-017.md` exists (hero project)
-- [ ] `seed/config.yaml` → `dashboard.theme: acme`
+```bash
+# Panel sin login (espera 200, no 302):
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:9119/                 # 200
 
-## LLM chat test
+# Auth desactivada:
+curl -s http://localhost:9119/api/status | python3 -m json.tool                 # auth_required:false, auth_providers:[]
 
-**SKIPPED — run `make setup` first** if `data/hermes/.env` is missing.
+# Tema Acme activo:
+curl -s http://localhost:9119/api/dashboard/themes | python3 -c \
+  "import sys,json;print(json.load(sys.stdin)['active'])"                        # acme
 
-After setup:
+# Plugin acme-admin descubierto (source user):
+curl -s http://localhost:9119/api/dashboard/plugins                             # incluye {"name":"acme-admin","source":"user"}
 
-1. Open http://localhost:9119 (acme/changeme)
-2. Paste RFQ from `ejemplo-entrada-001.txt`
-3. Expect borrador markdown with BORRADOR, referencia AC, citas AC-2024-017, secciones plantilla v3
+# Logo Acme servido (ruta de assets de plugin):
+curl -s -o /dev/null -w "%{http_code} %{content_type}\n" \
+  http://localhost:9119/dashboard-plugins/acme-admin/dist/logo.svg              # 200 image/svg+xml
 
-Record pass/fail and model used in handoff notes.
+# Solo skills Acme en el volumen:
+ls data/hermes/skills/                                                          # acme-checklist-cierre / acme-memoria-proyectos / acme-rfq-a-oferta
+ls data/hermes/.no-bundled-skills                                               # marcador presente
 
-## Evidence log
+# Corpus montado (solo lectura):
+make shell  # -> ls /workspace/docs   (14 ficheros)
+```
 
-| Date | Operator | make up | make health | setup | chat demo |
-|------|----------|---------|-------------|-------|-----------|
-| | | | | | |
+Resultados de referencia (capturados en este despliegue): `GET / → 200`;
+`auth_required:false`, `auth_providers:[]`, `gateway_platforms:[]`;
+`themes.active = acme`; plugins = `acme-admin (user)`, achievements/kanban (bundled, pestañas ocultas);
+skills = solo las 3 Acme.
+
+## Prueba de chat / RFQ (requiere modelo)
+
+El chat acepta y **encola** el mensaje sin modelo, mostrando
+"Setup Required — Hermes needs a model provider". Tras `make setup` (key del
+cliente en `data/hermes/.env`):
+
+1. Abrir http://localhost:9119 → Chat.
+2. Pegar la RFQ de `seed/company-docs/rfq/ejemplo-entrada-001.txt`.
+3. Esperar **BORRADOR** con referencia AC, cita de `AC-2024-017`, secciones de la plantilla v3 y margen ≥ 18 %.
+
+> Sin key no se genera el borrador (es acción del cliente: `make setup`). Todo lo demás se verifica arriba sin key.
+
+### Residual conocido en el chat (límite "sin fork")
+
+El chat embebido es la TUI del agente (xterm.js). Su splash de inicio muestra el
+arte "HERMES-AGENT" y la línea "Nous Research · Messenger of the Digital Gods",
+**hardcodeados** en el build de la TUI (`branding.tsx`). No son alcanzables por
+temas/plugins del dashboard ni por skins de la CLI (solo un fork los quitaría,
+prohibido). Es del estado inactivo/"setup required"; tras `make setup`, al iniciar
+conversación el borrador llena el terminal y el banner sube fuera de vista. Ver
+HANDOFF.md → "Residuales conocidos".
+
+## Registro de evidencia
+
+| Fecha | Operador | make up | sin login | tema acme | solo skills Acme | chat RFQ (tras setup) |
+|-------|----------|---------|-----------|-----------|------------------|------------------------|
+| | | | | | | |

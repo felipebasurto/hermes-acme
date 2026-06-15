@@ -12,10 +12,16 @@ services:
       - ./seed/company-docs:/workspace/docs:ro
     environment:
       HERMES_DASHBOARD: "1"
-      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: acme
-      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: changeme
-      API_SERVER_ENABLED: "true"
-      API_SERVER_HOST: "0.0.0.0"
+      # Demo LAN sin login. El gate de auth de Hermes solo se activa si se
+      # registra un proveedor (p.ej. BASIC_AUTH_*); sin proveedor, un bind a
+      # 0.0.0.0 exige --insecure (HERMES_DASHBOARD_INSECURE=1) o falla cerrado.
+      # En produccion: detras de VPN/SSO/reverse proxy. Ver docs/RUNBOOK.md.
+      HERMES_DASHBOARD_INSECURE: "1"
+      # API gateway REST opcional: off hasta que el cliente anada API_SERVER_KEY
+      # en `make setup`. Mantenerlo on sin key deja el banner "Api_server
+      # disconnected" en el dashboard. Activar: API_SERVER_ENABLED=true +
+      # API_SERVER_KEY=<...> en data/hermes/.env.
+      API_SERVER_ENABLED: "false"
     deploy:
       resources:
         limits:

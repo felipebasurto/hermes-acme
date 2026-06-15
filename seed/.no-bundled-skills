@@ -1,0 +1,5 @@
+# Marcador leido por tools/skills_sync.py del contenedor Hermes.
+# Su mera presencia en HERMES_HOME (/opt/data) convierte la sincronizacion de
+# los ~73 skills genericos del bundle en un no-op, dejando SOLO los skills Acme
+# sembrados en seed/skills/. Borra este archivo para reactivar el catalogo
+# completo de Hermes. Ver HANDOFF.md (decision "skills curados").

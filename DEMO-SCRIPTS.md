@@ -6,9 +6,9 @@
 **Duration:** ~5 min
 
 1. Show README quick start (3 steps).
-2. `make health` — container green, dashboard 200.
-3. Browser: http://localhost:9119 — login `acme` / `changeme`.
-4. Point out Acme theme (steel/amber, tagline Burgos).
+2. `make health` — container green, dashboard 200 (sin login).
+3. Browser: http://localhost:9119 — abre directo, **sin login**.
+4. Point out marca Acme (logo, acero/ámbar, "Maquinaria Especial · Burgos"), navegación simplificada y que no hay referencias Nous ni selector de temas.
 5. Explain keys only in `./data/hermes/.env` after `make setup`.
 6. If setup done: paste RFQ ejemplo-001 → borrador in ~1–2 min.
 7. Highlight **BORRADOR** and margen 18 % rule.
