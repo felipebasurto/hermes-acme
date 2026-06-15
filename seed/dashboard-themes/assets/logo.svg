@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" role="img" aria-label="Acme Maquinaria Especial">
+  <rect width="120" height="40" rx="4" fill="#1a1f26"/>
+  <path d="M8 28 L20 12 L32 28 Z" fill="none" stroke="#64748b" stroke-width="2"/>
+  <path d="M14 28 L26 28" stroke="#f59e0b" stroke-width="2"/>
+  <text x="38" y="18" font-family="IBM Plex Sans, sans-serif" font-size="11" font-weight="600" fill="#f8fafc">ACME</text>
+  <text x="38" y="30" font-family="IBM Plex Sans, sans-serif" font-size="7" fill="#94a3b8">MAQUINARIA ESPECIAL</text>
+  <rect x="100" y="10" width="12" height="20" rx="1" fill="#2563eb" opacity="0.9"/>
+</svg>
