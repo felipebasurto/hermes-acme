@@ -34,8 +34,13 @@ Chat, Sesiones, Skills, Docs (Documentation), Config. Se ocultan: Files, Models,
 ### Logo: ruta de servido (gotcha)
 `/dashboard-themes/assets/` **no** se sirve (cae al index.html de la SPA). La única ruta de ficheros estáticos es la de assets de plugin: el logo se sirve por `/dashboard-plugins/acme-admin/dist/logo.svg` y se referencia así desde el `customCSS`.
 
-### Residual conocido
-El pie "System" muestra "Update Hermes" / "Restart Gateway" (controles operativos). No contiene "Nous" ni "Hermes Teal" (lo que prohíbe el DoD), así que se deja por utilidad. Si se quiere ocultar, añadir un selector para la sección System en `acme.yaml`.
+### Residuales conocidos (límites del "sin fork")
+
+1. **Banner del chat embebido (el más relevante).** El chat es un terminal xterm.js que ejecuta la TUI del agente. Su splash de inicio muestra el arte ASCII "HERMES-AGENT" y la línea "Nous Research · Messenger of the Digital Gods". Investigado a fondo: esa línea es una **constante hardcodeada** en `ui-tui/src/components/branding.tsx` (`TAG_FULL`), y el arte grande usa el `bannerLogo` por defecto. Ni los temas/plugins del dashboard ni el sistema de skins de la CLI (`~/.hermes/skins/*.yaml`, `display.skin`) pueden quitarlos: el skin recolorea y cambia `agent_name` (solo visible en modo compacto/status), pero no el arte ancho ni el tagline. Quitarlos exige **forkear** la TUI/imagen, prohibido por las restricciones. Atenuante: el banner es del estado inactivo/"setup required"; al iniciar conversación (tras `make setup`) el borrador llena el terminal y el banner sube fuera de vista. Es texto de celdas de terminal, no DOM, así que tampoco es ocultable por CSS de forma fiable.
+
+2. **Pie "System"** ("Update Hermes" / "Restart Gateway"): controles operativos. No contienen "Nous" ni "Hermes Teal" (lo que prohíbe el DoD), se dejan por utilidad. Para ocultarlos, añadir un selector de la sección System en `acme.yaml`.
+
+El shell del dashboard (barra lateral, navegación, cabecera, título, favicon, temas, skills) — lo que ve el admin la mayor parte del tiempo — sí queda 100% white-label por mecanismos soportados.
 
 ## Re-brand para otro cliente
 

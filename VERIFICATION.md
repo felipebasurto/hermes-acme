@@ -61,6 +61,16 @@ cliente en `data/hermes/.env`):
 
 > Sin key no se genera el borrador (es acción del cliente: `make setup`). Todo lo demás se verifica arriba sin key.
 
+### Residual conocido en el chat (límite "sin fork")
+
+El chat embebido es la TUI del agente (xterm.js). Su splash de inicio muestra el
+arte "HERMES-AGENT" y la línea "Nous Research · Messenger of the Digital Gods",
+**hardcodeados** en el build de la TUI (`branding.tsx`). No son alcanzables por
+temas/plugins del dashboard ni por skins de la CLI (solo un fork los quitaría,
+prohibido). Es del estado inactivo/"setup required"; tras `make setup`, al iniciar
+conversación el borrador llena el terminal y el banner sube fuera de vista. Ver
+HANDOFF.md → "Residuales conocidos".
+
 ## Registro de evidencia
 
 | Fecha | Operador | make up | sin login | tema acme | solo skills Acme | chat RFQ (tras setup) |
