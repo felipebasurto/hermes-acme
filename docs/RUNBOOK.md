@@ -59,7 +59,7 @@ make down
 | Síntoma | Acción |
 |---------|--------|
 | GUI no carga | `docker compose ps`; mira `acme-chat`; `curl -s -o /dev/null -w "%{http_code}" localhost:3000` |
-| Modal "What's New" con texto Open WebUI | Es el changelog upstream de primer arranque; se cierra con "Okay, Let's Go!" y no reaparece (estado en `data/open-webui`) |
+| Modal "What's New" con texto Open WebUI | Changelog upstream de primer arranque; se cierra con "Okay, Let's Go!". El descarte se guarda en el localStorage del navegador (reaparece en un navegador/perfil nuevo, no para un usuario que vuelve). Atribución OSS exigida por licencia. |
 | Chat sin respuesta / "proveedor no configurado" | Ejecuta `make setup`; confirma `data/hermes/.env` |
 | El selector muestra otro modelo | Debe ser `acme-agent` (`API_SERVER_MODEL_NAME`); reinicia `acme-agent` |
 | Aparecen ~73 skills | Falta el marcador; `make down && sudo rm -rf data/hermes && make up` |
