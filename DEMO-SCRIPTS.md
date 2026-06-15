@@ -5,13 +5,13 @@
 **Audience:** Gerente / dirección industrial ficticia  
 **Duration:** ~5 min
 
-1. Show README quick start (3 steps).
-2. `make health` — container green, dashboard 200 (sin login).
-3. Browser: http://localhost:9119 — abre directo, **sin login**.
-4. Point out marca Acme (logo, acero/ámbar, "Maquinaria Especial · Burgos"), navegación simplificada y que no hay referencias Nous ni selector de temas.
-5. Explain keys only in `./data/hermes/.env` after `make setup`.
-6. If setup done: paste RFQ ejemplo-001 → borrador in ~1–2 min.
-7. Highlight **BORRADOR** and margen 18 % rule.
+1. Show README quick start (3 pasos: `make build` → `make up` → `make setup`).
+2. `make health` — contenedores verdes, GUI :3000 HTTP 200, API agente :8642 OK.
+3. Browser: **http://localhost:3000** — la GUI web Acme abre directo, **sin login**, **sin terminal**.
+4. Señala la marca Acme ("Acme Maquinaria Especial") y el modelo `acme-agent` en el selector. Cierra el modal de novedades si aparece ("Okay, Let's Go!").
+5. Explica que la key del modelo solo vive en `./data/hermes/.env` tras `make setup`.
+6. Si hay setup: pega la RFQ ejemplo-001 en el chat → borrador en ~1–2 min.
+7. Resalta **BORRADOR**, cita de AC-2024-017 y la regla de margen ≥ 18 %.
 
 **Talking point:** "Días de oferta → minutos de borrador; humano sigue mandando."
 

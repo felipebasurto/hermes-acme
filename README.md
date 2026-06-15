@@ -1,25 +1,20 @@
-# Acme Hermes — reference deployment
+# Acme Agent — despliegue de referencia (v3)
 
-Despliegue white-label del [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT) para **Acme Maquinaria Especial S.L.** — RFQ → borrador oferta técnica. Panel administrativo simplificado, marca Acme, sin login en demo LAN.
+Agente de oficina técnica para **Acme Maquinaria Especial S.L.** (cliente industrial ficticio, Burgos) que convierte RFQ en **borrador de oferta técnica**. Los administrativos usan una **GUI web de chat** (sin terminal, sin login en demo); el agente Hermes corre headless detrás, con marca upstream parcheada y solo skills Acme.
 
-Cliente industrial ficticio de Burgos. **Sin API keys en el repo.**
+**Sin API keys en el repo.** La key del modelo va en `./data/hermes/.env` vía `make setup`.
 
 ## Quick start (3 pasos)
 
 ```bash
-cd ~/code/hermes-acme
-make up          # seed del volumen + arranca gateway + dashboard (sin login)
-make setup       # una vez: asistente Hermes — API key (OpenRouter/Portal) → data/hermes/.env
-# Abre el panel: http://localhost:9119   (demo sin usuario/contraseña)
+make build      # construye la imagen fork local del agente (acme-hermes-agent:local)
+make up         # arranca GUI (acme-chat) + agente headless (acme-agent)
+make setup      # una vez: asistente del agente — API key (OpenRouter/OpenAI) → data/hermes/.env
 ```
 
-**Las API keys viven solo en `./data/hermes/.env`**, creado por `make setup`. Nunca se commitean.
+Abre la GUI Acme: **http://localhost:3000** (demo sin login). Escribe la RFQ en el chat.
 
-OAuth opcional (Nous Portal):
-
-```bash
-make setup-portal
-```
+> Sin `make setup` la GUI carga y acepta mensajes, pero el agente responde "proveedor no configurado" hasta que el cliente añade su key.
 
 Smoke check:
 
@@ -27,44 +22,44 @@ Smoke check:
 make health
 ```
 
-## Demo
+## Arquitectura (resumen)
 
-Pega la RFQ de `seed/company-docs/rfq/ejemplo-entrada-001.txt` en el chat del panel (tras `make setup`). El agente devuelve un **BORRADOR** de oferta citando el proyecto análogo `AC-2024-017`.
+```
+navegador (admin) ──> acme-chat (Open WebUI, :3000, marca Acme, sin login)
+                          │  POST /v1/chat/completions
+                          ▼
+                      acme-agent (Hermes headless, :8642/v1, dashboard OFF)
+                          │  persona + 6 skills + corpus
+                          ▼
+                      data/hermes  +  seed/company-docs (AC-2024-017, tarifas, plantilla)
+```
 
-## Panel administrativo
-
-- **Sin login** en demo LAN (`HERMES_DASHBOARD_INSECURE=1`). En producción va detrás de VPN/SSO/reverse proxy — ver [docs/RUNBOOK.md](docs/RUNBOOK.md).
-- **Marca Acme**: tema `acme` por defecto, logo y colores Acme, sin referencias Nous visibles ni selector de temas.
-- **Navegación simplificada**: Chat, Sesiones, Skills, Docs, Config.
-- **Solo skills Acme** (marcador `seed/.no-bundled-skills` evita los ~73 skills genéricos del bundle).
-
-El white-label usa solo mecanismos soportados de Hermes (tema YAML + plugin UI), sin fork. Detalles y tradeoffs en [HANDOFF.md](HANDOFF.md).
+Detalle y decisión de GUI en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Layout
 
-| Path | Purpose |
-|------|---------|
-| `seed/` | SOUL, AGENTS, skills, tema, config (versionado) |
-| `seed/.no-bundled-skills` | Marcador: deja solo los skills Acme (no sincroniza el bundle) |
-| `seed/dashboard-themes/acme.yaml` | Tema Acme (paleta, logo, white-label CSS) |
-| `seed/plugins/acme-admin/` | Plugin UI Acme (título + favicon del navegador) |
-| `seed/company-docs/` | Corpus ficticio (montado solo-lectura en `/workspace/docs`) |
-| `data/hermes/` | Volumen runtime (gitignored `.env` y `sessions/`) |
-| `docker-compose.yml` | Servicio `nousresearch/hermes-agent` (sin login, API opcional) |
-| `scripts/` | Helpers de seed y health |
+| Path | Propósito |
+|------|-----------|
+| `Dockerfile` | Fork de parche → `acme-hermes-agent:local` (marca upstream parcheada) |
+| `docker-compose.yml` | `acme-chat` (GUI) + `acme-agent` (Hermes headless) |
+| `seed/skills/` | 6 skills Acme (`acme-*`) en formato SKILL.md |
+| `seed/.no-bundled-skills` | Marcador: solo skills Acme (sin los ~73 del bundle) |
+| `seed/company-docs/` | Corpus ficticio (montado ro en `/workspace/docs`) |
+| `seed/dashboard-themes/acme.yaml` | Tema Acme (si se reactivara el dashboard interno) |
+| `data/hermes/` | Volumen runtime (`.env` y `sessions/` gitignored) |
 
 ## Make targets
 
-- `make seed` — copy `seed/` → `data/hermes/` (preserves existing `.env`)
-- `make up` / `make down` — start/stop stack
-- `make setup` / `make setup-portal` — configure model credentials
-- `make logs` / `make health` / `make shell`
+- `make build` — construye la imagen fork del agente
+- `make up` / `make down` — arranca/para el stack
+- `make setup` / `make setup-portal` — credenciales del modelo (no van a git)
+- `make seed` / `make health` / `make logs` / `make shell`
 
 ## Docs
 
-- [docs/RUNBOOK.md](docs/RUNBOOK.md) — operations
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — components
-- [docs/CLIENT-PACK.md](docs/CLIENT-PACK.md) — what ships to a client
-- [DEMO-SCRIPTS.md](DEMO-SCRIPTS.md) — demo script
-- [VERIFICATION.md](VERIFICATION.md) — smoke checklist
-- [HANDOFF.md](HANDOFF.md) — agent handoff notes
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — decisión GUI, diagrama, componentes
+- [docs/RUNBOOK.md](docs/RUNBOOK.md) — operación, demo LAN vs producción
+- [docs/CLIENT-PACK.md](docs/CLIENT-PACK.md) — qué se entrega al cliente
+- [DEMO-SCRIPTS.md](DEMO-SCRIPTS.md) — guion de demo (RFQ por la GUI)
+- [VERIFICATION.md](VERIFICATION.md) — checklist con evidencia v3
+- [HANDOFF.md](HANDOFF.md) — notas de traspaso v3

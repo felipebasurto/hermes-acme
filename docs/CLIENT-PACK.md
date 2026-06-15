@@ -1,42 +1,41 @@
-# Client pack — Acme Hermes reference
+# Client pack — Acme Agent v3
 
-What you would deliver to a fictional client **Acme Maquinaria Especial** as a packaged workspace (demo scope).
+Qué se entrega al cliente ficticio **Acme Maquinaria Especial** como workspace empaquetado (alcance demo/mock).
 
-## Included in repo
+## Incluido en el repo
 
-| Deliverable | Description |
-|-------------|-------------|
-| Docker Compose stack | Single-service Hermes gateway + dashboard |
-| Seed identity | SOUL.md, AGENTS.md, MEMORY.md (Spanish OT persona) |
-| 3 skills | RFQ→oferta, memoria proyectos, checklist cierre |
-| Dashboard theme | `acme` — industrial steel, amber/blue, logo |
-| Company corpus | 14 docs under `seed/company-docs/` (fictional) |
-| Runbook + demo scripts | Operations and sales demo path |
+| Entregable | Descripción |
+|------------|-------------|
+| Stack Docker Compose | `acme-chat` (GUI web) + `acme-agent` (Hermes headless) |
+| Imagen fork local | `Dockerfile` → `acme-hermes-agent:local`, marca upstream parcheada |
+| GUI white-label | Open WebUI rebrandeado a "Acme Maquinaria Especial", sin login en demo |
+| Identidad seed | SOUL.md, AGENTS.md, MEMORY.md (persona OT en español) |
+| 6 skills | rfq→oferta, memoria proyectos, checklist cierre, cálculo margen, sección técnica, validar plazo |
+| Corpus | 14 docs en `seed/company-docs/` (ficticios), AC-2024-017 como proyecto faro |
+| Runbook + demo | Operación y guion de venta (RFQ por la GUI) |
 
-## Client responsibilities
+## Responsabilidades del cliente
 
-1. Provide LLM credentials via `make setup` (keys stay in their volume).
-2. Change dashboard basic auth password before production-like deploy.
-3. Human review of every borrador before customer send (governance in SOUL).
+1. Aportar credenciales LLM vía `make setup` (la key queda en su volumen, no en git).
+2. Antes de producción: activar login de la GUI (`WEBUI_AUTH=true`), VPN/SSO/TLS, rotar `API_SERVER_KEY`.
+3. Revisión humana de cada borrador antes de enviarlo al cliente (gobernanza en SOUL.md).
 
-## Customization levers
+## Palancas de personalización
 
-- **Persona:** edit `seed/SOUL.md`, reseed
-- **Tarifas / plantilla:** edit `seed/company-docs/`, restart not required for docs mount
-- **Theme:** edit `seed/dashboard-themes/acme.yaml`
-- **Skills:** add/edit under `seed/skills/*/SKILL.md`
+- **Persona:** `seed/SOUL.md` → reseed.
+- **Tarifas / plantilla:** `seed/company-docs/` (mount ro, sin rebuild).
+- **Skills:** `seed/skills/*/SKILL.md`.
+- **Marca GUI:** `WEBUI_NAME` en `docker-compose.yml`; tema del agente en `seed/dashboard-themes/acme.yaml`.
 
-## Out of scope (upsell)
+## Nota de licencias (importante)
 
-- ERP/MCP connectors
-- NVIDIA RAG ingest pipeline
-- Multi-tenant hosting
-- Signed PDF generation workflow
+- **Agente Hermes:** MIT (Nous Research). El fork es una capa de parche de marca; ver `HANDOFF.md`.
+- **Open WebUI (GUI):** licencia BSD-3 con cláusula de marca. Permite white-label del nombre visible (`WEBUI_NAME`) para despliegues **≤50 usuarios**. Para retirar el 100% de la atribución a mayor escala: **licencia enterprise de Open WebUI** o migrar a **LibreChat (MIT)**, que también habla con el endpoint OpenAI del agente. El modal de "novedades" de primer arranque muestra texto upstream una sola vez (atribución OSS) y se descarta.
 
-## Support model (demo)
+## Fuera de alcance (upsell)
 
-Internal DMKINGS-style handoff: client IT runs Docker on a Mac or Linux host; Acme OT owns content in `seed/`.
+- Conectores ERP/MCP. Pipeline RAG. Multi-tenant. Generación de PDF firmado.
 
-## License
+## Soporte (demo)
 
-Hermes Agent: MIT (Nous Research). Seed content in this repo: fictional demo data, same repo license as stated by maintainer.
+Cliente IT corre Docker en host Linux/Mac; OT de Acme posee el contenido en `seed/`.
