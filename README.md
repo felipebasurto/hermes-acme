@@ -1,22 +1,21 @@
 # Acme Hermes — reference deployment
 
-White-labeled [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT) for **Acme Maquinaria Especial S.L.** — RFQ → borrador oferta técnica.
+Despliegue white-label del [Hermes Agent](https://github.com/NousResearch/hermes-agent) (MIT) para **Acme Maquinaria Especial S.L.** — RFQ → borrador oferta técnica. Panel administrativo simplificado, marca Acme, sin login en demo LAN.
 
-Fictional Burgos industrial client. **No API keys in this repo.**
+Cliente industrial ficticio de Burgos. **Sin API keys en el repo.**
 
-## Quick start (3 steps)
+## Quick start (3 pasos)
 
 ```bash
 cd ~/code/hermes-acme
-make up          # seed volume + start gateway + dashboard
-make setup       # once: Hermes wizard — API key / Nous Portal OAuth → data/hermes/.env
+make up          # seed del volumen + arranca gateway + dashboard (sin login)
+make setup       # una vez: asistente Hermes — API key (OpenRouter/Portal) → data/hermes/.env
+# Abre el panel: http://localhost:9119   (demo sin usuario/contraseña)
 ```
 
-Open dashboard: http://localhost:9119 — user `acme`, password `changeme`.
+**Las API keys viven solo en `./data/hermes/.env`**, creado por `make setup`. Nunca se commitean.
 
-**API keys live only in `./data/hermes/.env`**, created when you run `make setup`. They are never committed.
-
-Optional OAuth (recommended by Hermes docs):
+OAuth opcional (Nous Portal):
 
 ```bash
 make setup-portal
@@ -30,17 +29,29 @@ make health
 
 ## Demo
 
-Paste the RFQ from `seed/company-docs/rfq/ejemplo-entrada-001.txt` into dashboard chat (after setup).
+Pega la RFQ de `seed/company-docs/rfq/ejemplo-entrada-001.txt` en el chat del panel (tras `make setup`). El agente devuelve un **BORRADOR** de oferta citando el proyecto análogo `AC-2024-017`.
+
+## Panel administrativo
+
+- **Sin login** en demo LAN (`HERMES_DASHBOARD_INSECURE=1`). En producción va detrás de VPN/SSO/reverse proxy — ver [docs/RUNBOOK.md](docs/RUNBOOK.md).
+- **Marca Acme**: tema `acme` por defecto, logo y colores Acme, sin referencias Nous visibles ni selector de temas.
+- **Navegación simplificada**: Chat, Sesiones, Skills, Docs, Config.
+- **Solo skills Acme** (marcador `seed/.no-bundled-skills` evita los ~73 skills genéricos del bundle).
+
+El white-label usa solo mecanismos soportados de Hermes (tema YAML + plugin UI), sin fork. Detalles y tradeoffs en [HANDOFF.md](HANDOFF.md).
 
 ## Layout
 
 | Path | Purpose |
 |------|---------|
-| `seed/` | SOUL, AGENTS, skills, theme, config (versioned) |
-| `seed/company-docs/` | Fictional corpus (mounted read-only at `/workspace/docs`) |
-| `data/hermes/` | Runtime volume (gitignored `.env` and `sessions/`) |
-| `docker-compose.yml` | `nousresearch/hermes-agent` service |
-| `scripts/` | Seed and health helpers |
+| `seed/` | SOUL, AGENTS, skills, tema, config (versionado) |
+| `seed/.no-bundled-skills` | Marcador: deja solo los skills Acme (no sincroniza el bundle) |
+| `seed/dashboard-themes/acme.yaml` | Tema Acme (paleta, logo, white-label CSS) |
+| `seed/plugins/acme-admin/` | Plugin UI Acme (título + favicon del navegador) |
+| `seed/company-docs/` | Corpus ficticio (montado solo-lectura en `/workspace/docs`) |
+| `data/hermes/` | Volumen runtime (gitignored `.env` y `sessions/`) |
+| `docker-compose.yml` | Servicio `nousresearch/hermes-agent` (sin login, API opcional) |
+| `scripts/` | Helpers de seed y health |
 
 ## Make targets
 

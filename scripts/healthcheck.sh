@@ -10,12 +10,12 @@ echo "== Docker =="
 $DOCKER_COMPOSE ps
 
 echo ""
-echo "== Dashboard :9119 (expect 401 without auth or 200 with basic auth) =="
-curl -s -o /dev/null -w "HTTP %{http_code}\n" -u acme:changeme http://localhost:9119/ || true
+echo "== Dashboard :9119 (demo sin login — expect 200) =="
+curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:9119/ || true
 
 echo ""
-echo "== Gateway API :8642/health (if enabled) =="
-curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost:8642/health || true
+echo "== Gateway API :8642/health (opcional — off hasta make setup con API_SERVER_KEY) =="
+curl -s -o /dev/null -w "HTTP %{http_code}\n" --max-time 4 http://localhost:8642/health || echo "no escucha (API server desactivado — no fatal)"
 
 echo ""
 echo "== Volume .env (API keys live here after make setup) =="
