@@ -1,24 +1,25 @@
 name: acme
 label: Acme Industrial
-description: Acero industrial con acentos ámbar y azul — Acme Maquinaria Especial Burgos
+description: Acero industrial con acentos ámbar y azul — Acme Maquinaria Especial, Burgos
 
+# Paleta de 3 capas. El resto de tokens shadcn se derivan de aquí vía color-mix().
 palette:
   background:
     hex: "#1a1f26"
     alpha: 1.0
   midground:
-    hex: "#64748b"
+    hex: "#cbd5e1"
     alpha: 1.0
   foreground:
     hex: "#f59e0b"
-    alpha: 0.15
-  warmGlow: "rgba(245, 158, 11, 0.25)"
-  noiseOpacity: 0.4
+    alpha: 0.12
+  warmGlow: "rgba(245, 158, 11, 0.22)"
+  noiseOpacity: 0.35
 
 typography:
   fontSans: "IBM Plex Sans, system-ui, sans-serif"
   fontMono: "IBM Plex Mono, ui-monospace, monospace"
-  fontUrl: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+  fontUrl: "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
   baseSize: "15px"
   lineHeight: "1.55"
 
@@ -35,12 +36,62 @@ colorOverrides:
   accentForeground: "#1a1f26"
   ring: "#3b82f6"
 
-assets:
-  logo: "/dashboard-themes/assets/logo.svg"
-
-tagline: Acme Maquinaria Especial Burgos
-
+# White-label visible. customCSS se inyecta como <style> con el tema activo.
+# Selectores anclados al DOM real del dashboard 0.16.0 (aside#app-sidebar,
+# nav[aria-label=Navigation], button[aria-label="Switch theme"]). Es el
+# mecanismo soportado sin fork; si el shell cambia de marcado habrá que
+# reajustar estos selectores (ver HANDOFF.md, tradeoff "ocultar built-ins").
 customCSS: |
-  [data-theme="acme"] header {
-    border-bottom: 1px solid color-mix(in srgb, #64748b 40%, transparent);
+  /* 1) Marca: sustituir el wordmark "Hermes Agent" por el logotipo Acme.
+        El logo se sirve por la ruta de assets de plugin (la unica ruta de
+        ficheros estaticos del dashboard); /dashboard-themes/assets/ NO se
+        sirve (cae al index.html de la SPA). */
+  #app-sidebar .border-b span {
+    font-size: 0 !important;
+    line-height: 0 !important;
+  }
+  #app-sidebar .border-b span::before {
+    content: "";
+    display: inline-block;
+    width: 168px;
+    height: 40px;
+    background: url("/dashboard-plugins/acme-admin/dist/logo.svg") no-repeat left center;
+    background-size: contain;
+  }
+
+  /* 2) Quitar referencias Nous visibles (enlace de pie de la barra lateral). */
+  a[href*="nousresearch.com"] {
+    display: none !important;
+  }
+
+  /* 3) Ocultar el selector de temas (deja Acme como tema único y sin temas Nous). */
+  button[aria-label="Switch theme"] {
+    display: none !important;
+  }
+
+  /* 4) Flujo admin simplificado: dejar solo Chat, Sesiones, Skills, Docs, Config.
+        Se ocultan las pestañas avanzadas (no se eliminan capacidades del agente,
+        solo su visibilidad en el panel — ver HANDOFF.md). */
+  #app-sidebar nav a[href="/files"],
+  #app-sidebar nav a[href="/models"],
+  #app-sidebar nav a[href="/logs"],
+  #app-sidebar nav a[href="/cron"],
+  #app-sidebar nav a[href="/plugins"],
+  #app-sidebar nav a[href="/mcp"],
+  #app-sidebar nav a[href="/channels"],
+  #app-sidebar nav a[href="/webhooks"],
+  #app-sidebar nav a[href="/pairing"],
+  #app-sidebar nav a[href="/profiles"],
+  #app-sidebar nav a[href="/env"],
+  #app-sidebar nav a[href="/system"],
+  #app-sidebar nav a[href="/kanban"],
+  #app-sidebar nav a[href="/achievements"],
+  #app-sidebar nav a[href="/analytics"] {
+    display: none !important;
+  }
+
+  /* 5) Ocultar la seccion "Plugins" de la barra (tabs de plugins bundled:
+        achievements, kanban) — incluye su encabezado. */
+  #app-sidebar div[aria-labelledby="hermes-sidebar-plugin-nav-heading"] {
+    display: none !important;
   }
