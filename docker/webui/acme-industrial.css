@@ -1,0 +1,375 @@
+/* Acme Agent v5 — tema industrial para hermes-webui.
+   Filosofía: chat como acción principal, superficies calmadas, señal/ruido alto. */
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+
+:root,
+:root.dark,
+:root[data-skin="acme-industrial"],
+:root.dark[data-skin="acme-industrial"] {
+  --acme-bg: #1a1f26;
+  --acme-surface: #232a33;
+  --acme-surface-2: #20262e;
+  --acme-border: #3d4a57;
+  --acme-text: #e2e8f0;
+  --acme-muted: #94a3b8;
+  --acme-accent: #f59e0b;
+  --acme-primary: #2563eb;
+  --acme-success: #22c55e;
+  --acme-warn: #f59e0b;
+  --acme-danger: #ef4444;
+
+  --bg: var(--acme-bg) !important;
+  --sidebar: var(--acme-surface) !important;
+  --surface: var(--acme-surface) !important;
+  --surface-subtle: var(--acme-surface-2) !important;
+  --surface-subtle-hover: #27313b !important;
+  --main-bg: var(--acme-bg) !important;
+  --topbar-bg: var(--acme-surface) !important;
+  --border: var(--acme-border) !important;
+  --border2: var(--acme-border) !important;
+  --border-subtle: rgba(61, 74, 87, 0.72) !important;
+  --border-muted: var(--acme-border) !important;
+  --text: var(--acme-text) !important;
+  --muted: var(--acme-muted) !important;
+  --accent: var(--acme-accent) !important;
+  --accent-hover: #d97706 !important;
+  --accent-bg: rgba(245, 158, 11, 0.10) !important;
+  --accent-bg-strong: rgba(245, 158, 11, 0.18) !important;
+  --accent-text: var(--acme-accent) !important;
+  --blue: var(--acme-primary) !important;
+  --gold: var(--acme-accent) !important;
+  --code-bg: #161b22 !important;
+  --input-bg: rgba(15, 23, 42, 0.55) !important;
+  --hover-bg: rgba(148, 163, 184, 0.08) !important;
+  --focus-ring: rgba(37, 99, 235, 0.34) !important;
+  --success: var(--acme-success) !important;
+  --warning: var(--acme-warn) !important;
+  --error: var(--acme-danger) !important;
+  --font-ui: "IBM Plex Sans", system-ui, sans-serif !important;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace !important;
+  color-scheme: dark !important;
+}
+
+* {
+  scrollbar-color: var(--acme-border) var(--acme-bg);
+}
+
+html,
+body {
+  background: var(--acme-bg) !important;
+  color: var(--acme-text) !important;
+  font-family: var(--font-ui) !important;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  border-radius: 4px !important;
+  font-family: var(--font-ui) !important;
+}
+
+.app-titlebar,
+.rail,
+.sidebar,
+.rightpanel,
+.topbar,
+.composer-wrap {
+  background: var(--acme-surface) !important;
+  border-color: var(--acme-border) !important;
+  box-shadow: none !important;
+}
+
+.app-titlebar {
+  height: 48px !important;
+  border-bottom: 1px solid var(--acme-border) !important;
+}
+
+.app-titlebar-icon svg {
+  display: none !important;
+}
+
+.app-titlebar-icon::before {
+  content: "";
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  background: url("favicon.svg") no-repeat center / contain;
+}
+
+.app-titlebar-title {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em !important;
+}
+
+.app-titlebar-title::after {
+  content: " · Maquinaria Especial";
+  color: var(--acme-muted);
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: 8px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.acme-role-chip {
+  align-items: center;
+  border: 1px solid var(--acme-border);
+  color: var(--acme-muted);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  height: 28px;
+  letter-spacing: 0.04em;
+  margin-right: 8px;
+  padding: 0 10px;
+  text-transform: uppercase;
+}
+
+:root[data-acme-role="usuario"] .acme-role-chip {
+  background: rgba(245, 158, 11, 0.10);
+  border-color: rgba(245, 158, 11, 0.44);
+  color: #fbbf24;
+}
+
+.rail {
+  width: 56px !important;
+  border-right: 1px solid var(--acme-border) !important;
+}
+
+.rail-btn,
+.sidebar-nav .nav-tab,
+.panel-head-btn,
+.icon-btn,
+.send-btn,
+.sm-btn,
+.btn,
+.new-chat-btn {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.rail-btn.active,
+.sidebar-nav .nav-tab.active {
+  background: rgba(37, 99, 235, 0.18) !important;
+  color: var(--acme-text) !important;
+  border-left: 3px solid var(--acme-primary) !important;
+}
+
+.rail-btn svg,
+.sidebar-nav .nav-tab svg {
+  stroke-width: 1.5 !important;
+}
+
+.panel-head,
+.settings-section-head,
+.detail-card-title,
+.settings-section-title,
+.topbar-title {
+  border-color: var(--acme-border) !important;
+}
+
+.panel-head span,
+.settings-section-title,
+.detail-card-title,
+.composer-mobile-config-kicker {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+
+.main,
+.chat,
+.panel-view,
+.messages,
+.messages-inner {
+  background: var(--acme-bg) !important;
+}
+
+.session-item {
+  min-height: 36px !important;
+  padding: 6px 8px !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+}
+
+.session-item.active,
+.session-item:hover {
+  background: var(--acme-surface-2) !important;
+  border-color: var(--acme-border) !important;
+}
+
+.session-title,
+.session-meta,
+.session-preview {
+  font-size: 13px !important;
+}
+
+.empty-state {
+  color: var(--acme-muted) !important;
+}
+
+.empty-state h2,
+.empty-state .empty-title {
+  color: var(--acme-text) !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+}
+
+.suggestion-grid {
+  display: none !important;
+}
+
+.composer-box {
+  background: var(--acme-surface) !important;
+  border: 1px solid var(--acme-border) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+.composer-box:focus-within {
+  border-color: var(--acme-primary) !important;
+  box-shadow: 0 0 0 2px var(--focus-ring) !important;
+}
+
+textarea#msg {
+  color: var(--acme-text) !important;
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+
+button.send-btn:not(:disabled),
+.btn.primary,
+.sm-btn.primary,
+.update-primary,
+.clarify-submit {
+  background: var(--acme-primary) !important;
+  border: 1px solid var(--acme-primary) !important;
+  color: #f8fafc !important;
+}
+
+button.send-btn:not(:disabled):hover,
+.btn.primary:hover,
+.sm-btn.primary:hover,
+.update-primary:hover,
+.clarify-submit:hover {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.tool-card {
+  background: var(--acme-surface-2) !important;
+  border: 1px solid var(--acme-border) !important;
+  border-left: 3px solid var(--acme-accent) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  font-family: var(--font-mono) !important;
+}
+
+.tool-card-name,
+.tool-arg-key,
+.tool-arg-val,
+.msg-body code,
+.msg-body pre,
+.msg-body table,
+.preview-code {
+  font-family: var(--font-mono) !important;
+}
+
+.msg-body table {
+  border-collapse: collapse !important;
+  font-size: 13px !important;
+}
+
+.msg-body th,
+.msg-body td {
+  border: 1px solid var(--acme-border) !important;
+  padding: 5px 8px !important;
+}
+
+.detail-alert,
+.agent-health-alert,
+.setup-required,
+.provider-warning {
+  background: rgba(245, 158, 11, 0.10) !important;
+  border: 1px solid rgba(245, 158, 11, 0.42) !important;
+  color: var(--acme-text) !important;
+  border-radius: 4px !important;
+}
+
+.detail-badge,
+.bg-badge,
+.dashboard-external-badge,
+.new-badge {
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+#themePickerGrid,
+#skinPickerGrid,
+#settingsLanguage,
+label[for="settingsLanguage"],
+#settingsLanguage + *,
+.theme-pick-btn,
+.skin-pick-btn,
+button[aria-label="Switch theme"],
+[data-dashboard-link],
+.dashboard-link {
+  display: none !important;
+}
+
+.workspace-readonly-note {
+  background: rgba(245, 158, 11, 0.10);
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  color: var(--acme-text);
+  font-size: 13px;
+  margin: 8px;
+  padding: 8px 10px;
+}
+
+:root[data-acme-role="usuario"] [data-panel="tasks"],
+:root[data-acme-role="usuario"] [data-panel="kanban"],
+:root[data-acme-role="usuario"] [data-panel="skills"],
+:root[data-acme-role="usuario"] [data-panel="memory"],
+:root[data-acme-role="usuario"] [data-panel="profiles"],
+:root[data-acme-role="usuario"] [data-panel="todos"],
+:root[data-acme-role="usuario"] [data-panel="insights"],
+:root[data-acme-role="usuario"] [data-panel="logs"],
+:root[data-acme-role="usuario"] [data-panel="settings"],
+:root[data-acme-role="usuario"] #profileChipWrap,
+:root[data-acme-role="usuario"] .composer-model-wrap,
+:root[data-acme-role="usuario"] #composerMobileModelAction,
+:root[data-acme-role="usuario"] #composerReasoningWrap,
+:root[data-acme-role="usuario"] #composerToolsetsWrap,
+:root[data-acme-role="usuario"] .provider-quota-chip,
+:root[data-acme-role="usuario"] .yolo-pill,
+:root[data-acme-role="usuario"] #btnAttach,
+:root[data-acme-role="usuario"] .workspace-create,
+:root[data-acme-role="usuario"] #btnCreateWorkspace,
+:root[data-acme-role="usuario"] #btnEditWorkspaceDetail,
+:root[data-acme-role="usuario"] #btnDeleteWorkspaceDetail,
+:root[data-acme-role="usuario"] #btnSaveWorkspaceDetail,
+:root[data-acme-role="usuario"] #btnActivateWorkspaceDetail {
+  display: none !important;
+}
+
+:root[data-acme-role="usuario"] .rail,
+:root[data-acme-role="usuario"] .sidebar-nav {
+  border-color: var(--acme-border) !important;
+}
+
+@media (max-width: 640px) {
+  .app-titlebar-title::after {
+    content: " · Especial";
+  }
+
+  .acme-role-chip {
+    font-size: 10px;
+    padding: 0 6px;
+  }
+}
