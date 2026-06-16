@@ -1,134 +1,88 @@
-# Demo scripts — Acme Agent v5
+# Demo script — Acme Agent v6 ("como Claude, pero Acme")
 
-## Demo cliente 5–6 minutos
+Demo de 3 minutos. Objetivo: enseñar que el asistente "simplemente funciona" con un
+lenguaje familiar tipo Claude/Codex, en español, sin cabina de control. El LLM puede
+estar sin clave; el aviso degrada con elegancia.
 
-**Objetivo:** mostrar interfaz industrial, español, dos roles y flujo RFQ documentado aunque el modelo LLM no esté configurado.
-
-### 0:00 — Arranque
+## 0:00 — Arranque
 
 ```bash
-make build
-make up
+make build && make up
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8787/login
 ```
 
-Mensaje: “El stack arranca con `acme-agent` como gateway y `acme-webui` como panel cliente en español.”
+Frase: "Arranca `acme-agent` (gateway) y `acme-webui` (el asistente en español)."
 
-### 0:30 — Login administrador
+## 0:20 — Login operador
 
-- URL: `http://localhost:8787/login`
-- Usuario: `admin`
-- Contraseña: `acme-admin-demo`
+URL `http://localhost:8787/login`, usuario `operador`, contraseña `acme-user-demo`.
 
-Mostrar:
+Señalar, como en Claude:
 
-- Header `Acme Maquinaria Especial`.
-- Chip **Administrador**.
-- Rail completo:
-  - Conversación
-  - Documentación
-  - Procedimientos
-  - Memoria
-  - Tareas / Kanban / Lista actual
-  - Perfiles
-  - Registros
-  - Indicadores
-  - Configuración
+- Una sola barra lateral. **No hay rail de iconos.**
+- Arriba: "Conversación" + buscador + lista de conversaciones.
+- Abajo: footer con **Documentación** y el rol **Operador**.
+- En el centro: "Pega una consulta de oferta o RFQ para empezar".
 
-### 2:00 — Configuración admin
+Frase: "Si Claude no lo enseña en la primera pantalla, Acme tampoco."
 
-Entrar en **Configuración** y recorrer:
+## 0:50 — Escribir una RFQ
 
-- Conversación/modelo.
-- Proveedor.
-- Apariencia industrial Acme.
-- Sistema/gateway.
+En el composer de abajo, pegar:
 
-Frase: “Aquí configura IT; el operador no ve esto.”
+```text
+Buenos días, necesitamos una línea de envasado para bandejas 400x300 mm,
+120 uds/min, plazo 14 semanas. ¿Precio y plazo orientativo?
+```
 
-### 2:30 — Documentación
+Enter. Sin clave de modelo, aparece el aviso calmado en español:
 
-Abrir **Documentación** y mostrar corpus:
+```text
+Error: Modelo no configurado. Ejecute `hermes model` para seleccionar proveedor…
+```
 
-- `/workspace/docs/proyecto-AC-2024-017.md`
-- `/workspace/docs/tarifas-mecanica.md`
-- `/workspace/docs/tarifas-automatizacion.md`
+Frase: "La demo no depende de la key. El asistente avisa en español, no se rompe."
+
+## 1:20 — Documentación
+
+Clic en **Documentación** (footer). Mostrar el corpus de solo lectura
+(`/workspace/docs`, `AC-2024-017`, tarifas). Clic en el logo **Acme** del header para
+volver a la conversación.
+
+Frase: "Un enlace discreto a la documentación, nada de pestañas."
+
+## 1:50 — Login administrador
+
+Logout (`/api/auth/logout`) y login `admin` / `acme-admin-demo`.
 
 Señalar:
 
-- `AC-2024-017`
-- 120 uds/min
-- plazo real 18 semanas
-- margen 21,4 %
+- Mismo layout limpio. **Tampoco hay rail.**
+- El footer ahora añade **Configuración**. Rol **Administrador**.
 
-### 3:00 — RFQ admin
+## 2:15 — Configuración en 1 clic
 
-En **Conversación**, pegar:
+Clic en **Configuración** (footer). Recorrer las secciones en español: Conversación,
+Apariencia, Preferencias, Proveedor, Sistema, Ayuda.
 
-```text
-Buenos días,
+Frase: "El admin llega a ajustes en un clic. Aquí configura IT el proveedor; el operador
+nunca ve esto." Volver con el logo.
 
-Necesitamos línea de envasado para bandejas 400×300 mm, 120 uds/min,
-cambio de formato rápido. Ambiente lavado. Plazo 14 semanas.
-¿Precio y plazo orientativo?
-
-Saludos, Compras — Hostelería Industrial Norte S.L.
-```
-
-Si no hay LLM:
-
-- Mostrar error/banner discreto.
-- Decir: “La experiencia de demo no depende de la key. El administrador configura el proveedor después.”
-
-Si hay LLM:
-
-- Buscar `BORRADOR`.
-- Buscar `AC-2024-017`.
-- Buscar advertencia plazo 14 vs 18 semanas.
-- Buscar margen objetivo ≥ 18 %.
-
-### 4:00 — Login operador
-
-Logout y login:
-
-- Usuario: `operador`
-- Contraseña: `acme-user-demo`
-
-Mostrar:
-
-- Chip **Operador**.
-- Rail reducido: solo **Conversación** y **Documentación**.
-- No hay rueda de Configuración.
-- No hay selector modelo/API keys/plugins/shutdown.
-
-Intento técnico:
+## 2:45 — Verificación
 
 ```bash
-curl -b cookies-operador.txt -w "%{http_code}\n" http://localhost:8787/api/logs
+make verify   # branding + español → ALL PASS
 ```
-
-Resultado esperado: `403`.
-
-### 5:20 — RFQ operador
-
-Pegar la misma RFQ. El operador trabaja desde chat y documentación, sin superficies de ingeniería.
-
-### 5:45 — Verificación
-
-```bash
-./scripts/verify-branding.sh
-./scripts/verify-spanish.sh
-```
-
-Ambos deben acabar en:
 
 ```text
 == ALL PASS ==
+== ALL PASS ==
 ```
 
-### 6:00 — Cierre
+## 3:00 — Cierre
 
-“Interfaz industrial, español, dos roles, lista para planta Acme Burgos.”
+"Mismo backend de agente (sesiones, tools, workspace, RBAC), pero una experiencia que se
+siente como un asistente que funciona, no como un panel SCADA."
 
 ## Reset demo
 

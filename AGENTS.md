@@ -1,4 +1,8 @@
-# AGENTS — despliegue Acme Hermes (v5)
+# AGENTS — despliegue Acme Hermes (v6)
+
+UX v6: shell familiar tipo Claude/Codex. Sin rail de iconos; la navegación vive en el
+footer del sidebar (`Documentación`, y `Configuración` solo admin). SSOT visual en
+`docs/DESIGN-ACME.md`. RBAC backend intacto.
 
 Repo de referencia Docker para **Acme Maquinaria Especial** (ficticio, Burgos).
 Fork white-label de `nousresearch/hermes-agent` + GUI `hermes-webui` parcheada.
