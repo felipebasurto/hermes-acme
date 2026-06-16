@@ -1,83 +1,132 @@
-# Runbook — Acme Agent v4
+# Runbook — Acme Agent v5
 
-## Prerequisitos
+## Prerrequisitos
 
-- Docker Engine + Compose v2 (`docker compose`).
-- Puertos libres: **8787** (GUI Acme) y **8642** (API agente, debug).
+- Docker Engine + Compose v2.
+- Puertos libres:
+  - `8787` — UI Acme.
+  - `8642` — API/gateway del agente.
 
-## Primer arranque
+En Cursor Cloud, si Docker no está iniciado:
+
+```bash
+sudo dockerd
+sudo chmod 666 /var/run/docker.sock
+```
+
+## Arranque
 
 ```bash
 make build
 make up
-make setup        # interactivo — API key del modelo → data/hermes/.env
-make health
-./scripts/verify-branding.sh
 ```
 
-GUI: **http://localhost:8787** (demo sin `HERMES_WEBUI_PASSWORD`).
+Abrir: **http://localhost:8787/login**
 
-## Two-container ops
+Credenciales demo:
 
-| Contenedor | Rol | Volumen clave |
-|------------|-----|---------------|
-| `acme-agent` | Gateway Hermes | `./data/hermes` → `/opt/data`, `hermes-agent-src` → `/opt/hermes` |
-| `acme-webui` | GUI agente | `./data/hermes` → `/home/hermeswebui/.hermes`, agent src ro |
+| Perfil | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | `acme-admin-demo` |
+| Operador | `operador` | `acme-user-demo` |
 
-Estado WebUI: `./data/hermes/webui/` (`HERMES_WEBUI_STATE_DIR`).
+## Verificación
 
-### Upgrade imagen agente
+```bash
+docker compose ps
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8787/login
+./scripts/verify-branding.sh
+./scripts/verify-spanish.sh
+```
 
-Tras `docker pull` o rebuild del agente, el volumen `hermes-agent-src` puede quedar stale (upstream #681). Procedimiento:
+Salida esperada de los scripts:
+
+```text
+== ALL PASS ==
+```
+
+## Roles
+
+### Administrador
+
+Puede ver y usar:
+
+- Conversación
+- Documentación
+- Procedimientos
+- Memoria
+- Tareas / Kanban / Lista actual
+- Perfiles
+- Registros
+- Indicadores
+- Configuración completa
+
+### Operador
+
+Puede ver:
+
+- Conversación
+- Documentación (`/workspace/docs`, solo lectura)
+
+No debe ver ni usar:
+
+- Configuración
+- Proveedor/modelos/API keys
+- Procedimientos
+- Memoria
+- Registros
+- Perfiles
+- Plugins
+- Shutdown/gateway avanzado
+
+## Checks RBAC rápidos
+
+```bash
+ADMIN_COOKIE="$(mktemp)"
+USER_COOKIE="$(mktemp)"
+
+curl -s -c "$ADMIN_COOKIE" -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"acme-admin-demo"}' \
+  http://localhost:8787/api/auth/login
+
+curl -s -c "$USER_COOKIE" -H 'Content-Type: application/json' \
+  -d '{"username":"operador","password":"acme-user-demo"}' \
+  http://localhost:8787/api/auth/login
+
+curl -s -b "$USER_COOKIE" http://localhost:8787/api/workspaces
+curl -s -o /dev/null -w "%{http_code}\n" -b "$USER_COOKIE" http://localhost:8787/api/logs
+```
+
+Esperado:
+
+- Workspaces operador: solo `/workspace/docs`.
+- Logs operador: `403`.
+
+## Configurar modelo LLM
+
+La demo UI funciona sin LLM. Para respuestas reales:
+
+```bash
+make setup
+```
+
+Esto escribe claves en `data/hermes/.env` (gitignored). El repo no contiene claves reales.
+
+## Reseed / reset
+
+Si `data/hermes` quedó con permisos de contenedor:
 
 ```bash
 make down
-docker volume rm hermes-test_hermes-agent-src   # prefijo = nombre del proyecto compose
-make build && make up
+sudo rm -rf data/hermes
+make up
 ```
-
-## Seguridad (demo vs producción)
-
-- **Demo LAN:** sin password en webui. Solo red de confianza.
-- **Producción:** `HERMES_WEBUI_PASSWORD`, VPN/TLS, rotar `API_SERVER_KEY`. No publicar `:8642` fuera de Docker.
-
-## Configurar modelo
-
-| Comando | Cuándo |
-|---------|--------|
-| `make setup` | API key OpenRouter/OpenAI |
-| `make setup-portal` | OAuth portal one-shot |
-
-`scripts/seed-volume.sh` sincroniza `API_SERVER_KEY` con compose sin pisar keys LLM.
-
-## Reseed
-
-```bash
-make seed && make up
-```
-
-Limpio: `make down && rm -rf data/hermes && make up`.
 
 ## Logs
 
 ```bash
 make logs-webui
 make logs-agent
-make shell    # bash en acme-agent
 ```
 
-## Troubleshooting
-
-| Síntoma | Acción |
-|---------|--------|
-| GUI no carga | `docker compose ps`; `curl -w '%{http_code}' -o /dev/null localhost:8787` |
-| Onboarding "Hermes" residual | Completar onboarding una vez; strings parcheados en build. Revisar `verify-branding.sh`. |
-| Chat sin modelo | `make setup`; revisar `data/hermes/.env` |
-| ~73 skills bundled | `make down && rm -rf data/hermes && make up` |
-| Workspace vacío | Confirmar mount `./seed/company-docs:/workspace/docs:ro` |
-
-## Backup
-
-```bash
-tar czf acme-agent-backup.tgz data/hermes/
-```
+No parar contenedores al terminar una demo salvo que se necesite reset explícito.

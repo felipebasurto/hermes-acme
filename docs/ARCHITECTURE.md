@@ -1,136 +1,148 @@
-# Arquitectura — Acme Agent v4
+# Arquitectura — Acme Agent v5
 
-## StackState (data shape)
+## Stack
 
 ```yaml
-hermes_home: ./data/hermes          # config, sessions, skills, .env (shared)
-webui_state: ./data/hermes/webui    # HERMES_WEBUI_STATE_DIR (inside home)
-workspace: /workspace/docs          # seed/company-docs bind mount (ro)
-agent_image: acme-hermes-agent:local
-webui_image: acme-hermes-webui:local
+services:
+  acme-agent:
+    role: Hermes gateway headless
+    port: 8642
+    dashboard: off
+  acme-webui:
+    role: UI cliente industrial + RBAC
+    port: 8787
+shared_volume: ./data/hermes
+docs_workspace: /workspace/docs
+locale: es-ES
+theme: acme-industrial
 ```
-
-**Services**
-
-| Service | Role | Notes |
-|---------|------|-------|
-| `acme-agent` | Hermes gateway | `gateway run`, `HERMES_DASHBOARD=0`, API `:8642` debug only |
-| `acme-webui` | Agent-native GUI | `:8787`, `HERMES_WEBUI_HOST=0.0.0.0`, demo auth off |
-
-Shared contract: both containers bind `./data/hermes` (agent at `/opt/data`, webui at `/home/hermeswebui/.hermes`). Named volume `hermes-agent-src` shares `/opt/hermes` from the agent image for webui dependency install.
-
-## Resumen
-
-El cliente usa **Hermes WebUI** (`acme-webui`), una GUI de agente con sesiones, tool cards, workspace browser y skills nativos. El **agente Hermes** (`acme-agent`) corre headless como gateway. Ya no hay shim OpenAI como superficie principal ni Open WebUI.
 
 ```mermaid
 flowchart LR
-    admin([Administrativo de fabrica]) -->|navegador :8787| WEBUI
-
-    subgraph host[Docker host]
-      WEBUI["acme-webui<br/>(hermes-webui fork, :8787)<br/>marca Acme"]
-      AGENT["acme-agent<br/>(acme-hermes-agent:local)<br/>gateway run, dashboard OFF"]
-      VOL[("data/hermes<br/>SOUL · skills · .env · webui/")]
-      SRC[("hermes-agent-src<br/>/opt/hermes")]
-      DOCS[("seed/company-docs<br/>/workspace/docs ro")]
-      WEBUI -->|gateway chat, sessions, tools| AGENT
-      WEBUI --> VOL
-      AGENT --> VOL
-      WEBUI -->|uv pip install| SRC
-      AGENT --> SRC
-      AGENT --> DOCS
-      WEBUI --> DOCS
-    end
-
-    AGENT -.->|tras make setup| LLM([Proveedor LLM])
+  Admin[Administrador] --> UI[acme-webui :8787]
+  Operador[Operador] --> UI
+  UI --> Agent[acme-agent gateway]
+  UI --> Data[(data/hermes)]
+  Agent --> Data
+  UI --> Docs[(seed/company-docs<br/>/workspace/docs ro)]
+  Agent --> Docs
 ```
 
-## Decisión de GUI: Open WebUI (v3) → Hermes WebUI (v4)
+## Contrato AcmeUiSurface
 
-Requisito del product owner: UI de **agente**, no chatbot genérico sobre `/v1/chat/completions`.
+```yaml
+AcmeUiRole:
+  - admin
+  - usuario
 
-| Criterio | Open WebUI (v3) | Hermes WebUI (v4) |
-|----------|-----------------|-------------------|
-| Modelo mental | Chatbot OSS (modelos, conversaciones) | Agente Hermes (sesiones, tools, workspace, skills) |
-| Tool cards | No nativos (texto plano vía OpenAI shim) | Nativos en stream markdown |
-| Sesiones Hermes | No | Sí (historial, lineage, export) |
-| Workspace / docs | No | Browser integrado |
-| Skills panel | No | Sí |
-| Licencia white-label | BSD-3 + cláusula marca (≤50 usuarios) | MIT (fork `hermes-webui-acme`) |
-| Residuos de marca | `<title>Open WebUI</title>`, modal novedades OSS | Parcheable al 100% vía fork + script |
-| Wiring | `OPENAI_API_BASE_URL` oculta capacidades | Gateway nativo compartiendo `HERMES_HOME` |
-| Contenedores | 1 GUI + 1 agente | 2 (patrón upstream `docker-compose.two-container.yml`) |
+AcmeUiSurface:
+  locale: es-ES
+  theme: acme-industrial
+  rail_visible:
+    admin: [chat, workspaces, skills, memory, tasks, kanban, todos, profiles, logs, insights, settings]
+    usuario: [chat, workspaces]
+  settings_sections:
+    admin: [conversation, appearance, preferences, providers, plugins, system, help]
+    usuario: []
+```
 
-**Elegido v4: fork MIT de [nesquena/hermes-webui](https://github.com/nesquena/hermes-webui)** (`felipebasurto/hermes-webui-acme`). Principio **Experience First**: el administrativo ve sesiones, herramientas y workspace como en el agente, no un chat genérico. Principio **Subtract Before You Add**: Open WebUI y `data/open-webui/` se eliminan antes de añadir `acme-webui`.
+Fuente versionada: `seed/acme-ui-config.yaml`.
 
-Puerto cliente documentado: **`:8787`** (default upstream).
+## Login demo
 
-## Componentes
+El fork `acme-webui` activa auth demo con:
 
-### `acme-agent` (backend)
+```yaml
+ACME_UI_DEMO_LOGIN: "1"
+ACME_ADMIN_USERNAME: "admin"
+ACME_ADMIN_PASSWORD: "acme-admin-demo"
+ACME_USER_USERNAME: "operador"
+ACME_USER_PASSWORD: "acme-user-demo"
+```
 
-- **Imagen:** `acme-hermes-agent:local` (`Dockerfile` raíz).
-- **Comando:** `gateway run`.
-- **Env:** `HERMES_HOME=/opt/data`, `HERMES_DASHBOARD=0`, `API_SERVER_KEY` interno.
-- **Volúmenes:** `./data/hermes` → `/opt/data`; `hermes-agent-src` → `/opt/hermes`.
+Las credenciales son demo local, no producción.
 
-### `acme-webui` (GUI cliente)
+## RBAC
 
-- **Imagen:** `acme-hermes-webui:local` (`docker/webui/Dockerfile`).
-- **Puerto:** `:8787`.
-- **Env:** `HERMES_WEBUI_STATE_DIR=/home/hermeswebui/.hermes/webui`, demo sin password.
-- **Volúmenes:** `./data/hermes` → `/home/hermeswebui/.hermes`; `hermes-agent-src` → `.../hermes-agent:ro`; `./seed/company-docs` → `/workspace/docs:ro`.
+### Frontend
 
-### Frontera de secretos
+`scripts/patch-webui-acme.sh` inyecta:
 
-| Ubicación | ¿Secretos? |
-|-----------|-----------|
-| Repo git | Nunca |
-| `API_SERVER_KEY` en compose | Token interno LAN; rotar en prod |
-| `./data/hermes/.env` | Sí — API key del modelo tras `make setup` |
+- `data-acme-role` antes de paint.
+- Locale `es` / `es-ES` antes de paint.
+- Skin `acme-industrial`.
+- Mapa `ACME_ROLE_PANELS`.
+- Guard en `switchPanel()`.
+- Ocultación CSS de superficies de operador.
 
-Principio **Boundary Discipline**: agente (gateway, tools, LLM) vs webui (presentación). Contrato compartido: solo el volumen `data/hermes` y `hermes-agent-src`.
+### Backend
 
-## Flujo RFQ (demo)
+El mismo patch modifica el backend del fork:
 
-1. Admin abre `http://localhost:8787`, nueva sesión.
-2. Pega RFQ de `seed/company-docs/rfq/ejemplo-entrada-001.txt`.
-3. El agente carga SOUL + 6 skills desde `data/hermes` y lee `/workspace/docs/*`.
-4. Respuesta esperada: **BORRADOR** con AC-2024-017, plantilla v3, margen ≥ 18 % (requiere LLM en `.env`).
+- Sesión con metadata `{role, username, expires}`.
+- `/api/auth/status` devuelve `acme_role`.
+- Usuario recibe `GET /api/workspaces` reducido a `/workspace/docs`.
+- Usuario recibe `403` en:
+  - settings mutables
+  - logs
+  - providers/model admin
+  - profiles
+  - plugins
+  - skills mutation
+  - workspace mutation
+  - file write/upload
+  - dashboard/shutdown
 
-## Throughput checkpoint (v4 migration)
+Admin conserva acceso completo.
 
-| Dimensión | Plan |
-|-----------|------|
-| **Blocking first steps** | SUBTASK A docs → B fork build → C compose (stack must build before branding/e2e) |
-| **Independent workstreams** | B (Dockerfile + patch script) ∥ prep of C compose YAML after A; D verify script after B image exists; E skills anytime before F |
-| **Shared mutable state** | `./data/hermes` serialized via seed script; `API_SERVER_KEY` sync in `scripts/seed-volume.sh` (Encode Lessons in Structure); `hermes-agent-src` volume single-writer at first `up` |
-| **Smallest safe decomposition** | A doc → B image → C compose → D verify → E skills → F e2e → G docs/handoff; one atomic commit per subtask |
+## Tema industrial
 
-## Ficheros a parchear en fork hermes-webui (branding Acme)
+Fuente: `docker/webui/acme-industrial.css`, copiada a `static/acme-industrial.css` en build.
 
-Script: `scripts/patch-webui-branding.sh` (idempotente). Targets principales:
+Tokens principales:
 
-| Path | Cadenas / acción |
-|------|------------------|
-| `static/index.html` | `<title>`, `appTitlebarTitle`, placeholders, onboarding title, dashboard labels |
-| `static/manifest.json` | `name`, `short_name`, `description` |
-| `static/i18n.js` | Claves `onboarding_title`, `settings_*`, strings "Hermes Web UI" |
-| `static/panels.js` | `bot_name` default, help links `nousresearch.com`, alert titles |
-| `static/ui.js` | `assistantDisplayName`, heartbeat alert, `_botName` fallback |
-| `static/onboarding.js` | Copy "Hermes" en flujos OAuth |
-| `static/sw.js` | Offline message |
-| `static/sessions.js` | Title regex `Hermes WebUI` |
-| `static/style.css` | Comentarios skin "Nous Research" (tema industrial Acme) |
-| `api/config.py`, `api/auth.py`, `api/onboarding.py` | Defaults server-side `bot_name`, login page |
-| `static/favicon*`, `apple-touch-icon*`, `manifest.json` icons | Reemplazar con logo Acme |
+| Token | Valor |
+|---|---|
+| `--acme-bg` | `#1a1f26` |
+| `--acme-surface` | `#232a33` |
+| `--acme-border` | `#3d4a57` |
+| `--acme-text` | `#e2e8f0` |
+| `--acme-muted` | `#94a3b8` |
+| `--acme-accent` | `#f59e0b` |
+| `--acme-primary` | `#2563eb` |
 
-**Forbidden en UI servida:** `hermes`, `nous`, `nousresearch`, `Hermes Web`, `Hermes Control`, `Open WebUI` (case-insensitive en HTML/JS estático servido).
+Restricciones:
 
-**Preservar:** identificadores funcionales (`X-Hermes-CSRF-Token`, `HermesAssistantTurnAnchors`, rutas API `/api/*`) — no romper runtime.
+- Dark only.
+- Radio máximo 4px.
+- Sin sombras difusas.
+- Rail 56px.
+- Tool cards con borde izquierdo ámbar.
+- Selector de tema/skin oculto.
+- Dashboard Hermes externo oculto.
 
-## Referencias
+## Build the Lever
 
-- [Hermes Agent](https://github.com/NousResearch/hermes-agent)
-- [Hermes WebUI upstream](https://github.com/nesquena/hermes-webui) — pin `dc90ec9be4f2691a60d2413350405f2758a340a2`
-- [Acme fork](https://github.com/felipebasurto/hermes-webui-acme) (MIT)
+`docker/webui/Dockerfile` clona upstream `nesquena/hermes-webui` en el pin v4 y ejecuta:
+
+```bash
+scripts/patch-webui-acme.sh /src
+```
+
+Ese script llama primero a `patch-webui-branding.sh` y después aplica:
+
+1. Auth demo multiusuario.
+2. RBAC backend.
+3. RBAC frontend.
+4. Español visible.
+5. Tema industrial.
+6. Asserts de build.
+
+## Verificación
+
+```bash
+./scripts/verify-branding.sh
+./scripts/verify-spanish.sh
+```
+
+Los scripts hacen login admin, descargan HTML/JS/CSS servidos y fallan si detectan marca upstream o inglés visible crítico.

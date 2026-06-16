@@ -1,0 +1,58 @@
+version: 5
+locale: es-ES
+theme: acme-industrial
+workspace:
+  docs_path: /workspace/docs
+  readonly_for: [usuario]
+demo_credentials:
+  admin:
+    username: admin
+    password_env: ACME_ADMIN_PASSWORD
+    password_demo: acme-admin-demo
+    display_role: Administrador
+  usuario:
+    username: operador
+    password_env: ACME_USER_PASSWORD
+    password_demo: acme-user-demo
+    display_role: Operador
+roles:
+  admin:
+    label: Administrador
+    panels:
+      - chat
+      - workspaces
+      - skills
+      - memory
+      - tasks
+      - kanban
+      - todos
+      - profiles
+      - logs
+      - insights
+      - settings
+    settings_sections:
+      - conversation
+      - appearance
+      - preferences
+      - providers
+      - plugins
+      - system
+      - help
+  usuario:
+    label: Operador
+    panels:
+      - chat
+      - workspaces
+    settings_sections: []
+labels:
+  chat: Conversación
+  workspaces: Documentación
+  skills: Procedimientos
+  memory: Memoria
+  tasks: Tareas
+  kanban: Kanban
+  todos: Lista actual
+  profiles: Perfiles
+  logs: Registros
+  insights: Indicadores
+  settings: Configuración

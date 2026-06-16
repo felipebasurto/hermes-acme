@@ -1,85 +1,102 @@
-# Handoff — Acme Agent v4
+# Handoff — Acme Agent v5
 
-## Repo / rama
+## Entrega
 
-- Remote: https://github.com/felipebasurto/hermes-acme
-- Rama: `main`
-- Migración: Open WebUI (v3) → fork hermes-webui (v4)
+Acme Agent v5 queda listo como demo cliente: UI industrial en español, dos perfiles, RBAC frontend/backend, documentación RFQ y video.
 
-## Qué se entregó (v4)
+## Video
 
-- **GUI cliente** `acme-webui` (fork MIT hermes-webui) en `:8787`, agent-native (sesiones, tools, workspace, skills).
-- **Agente** `acme-agent`: `acme-hermes-agent:local`, `HERMES_DASHBOARD=0`, gateway compartiendo `./data/hermes`.
-- **Open WebUI eliminado** (`acme-chat`, `data/open-webui/`).
-- **8 skills Acme** + `.no-bundled-skills`.
-- **Build the Lever:** `scripts/patch-webui-branding.sh`, `scripts/verify-branding.sh`, `docker/webui/Dockerfile`.
-- Docs v4: README, ARCHITECTURE, RUNBOOK, CLIENT-PACK, DEMO-SCRIPTS, VERIFICATION.
-
-## Forks y pins
-
-| Componente | Upstream | Fork / build | Pin SHA |
-|------------|----------|--------------|---------|
-| WebUI | https://github.com/nesquena/hermes-webui | Build local `acme-hermes-webui:local` (fork remoto objetivo: https://github.com/felipebasurto/hermes-webui-acme) | `dc90ec9be4f2691a60d2413350405f2758a340a2` |
-| Agente | nousresearch/hermes-agent:latest | `acme-hermes-agent:local` (Dockerfile raíz) | tag `latest` al build |
-
-> **Nota fork remoto:** `felipebasurto/hermes-webui-acme` debe crearse pushando el tree parcheado (mismo pin + patch script). En esta sesión el parche vive en hermes-acme (`docker/webui/Dockerfile` clona upstream en build). GH CLI no autenticado en VM.
-
-## Ficheros parcheados (webui)
-
-Aplicados por `scripts/patch-webui-branding.sh` sobre clone upstream:
-
-- `static/index.html`, `manifest.json`, `sw.js`, `i18n.js`, `ui.js`, `panels.js`, `onboarding.js`, `sessions.js`, `boot.js`
-- `api/config.py`, `routes.py`, `onboarding.py`, `passkeys.py`, `models.py` (defaults `bot_name`)
-- `static/favicon*.svg/png`, `apple-touch-icon.png` ← logo Acme
-
-Agente (sin cambio v4): `Dockerfile` raíz parchea assets servidos del dashboard embebido (defensa en profundidad, dashboard OFF).
-
-## Decisiones clave (principios poteto)
-
-| Principio | Decisión |
-|-----------|----------|
-| **Experience First** | hermes-webui agent-native en lugar de Open WebUI chatbot-only |
-| **Subtract Before You Add** | Eliminado acme-chat antes de añadir acme-webui |
-| **Build the Lever** | patch-webui-branding.sh + verify-branding.sh idempotentes |
-| **Prove It Works** | VERIFICATION.md con output de curl/grep/compose |
-| **Encode Lessons in Structure** | API_SERVER_KEY sync en seed-volume.sh |
-| **Boundary Discipline** | Agente gateway vs webui presentación; contrato = volumen `data/hermes` |
-
-## StackState
-
-```yaml
-hermes_home: ./data/hermes
-webui_state: ./data/hermes/webui
-workspace: /workspace/docs  # seed/company-docs ro
-agent_image: acme-hermes-agent:local
-webui_image: acme-hermes-webui:local
+```text
+/opt/cursor/artifacts/acme-v5-demo-admin-usuario-20260616-v2.mp4
 ```
 
-Puerto cliente documentado: **8787**.
+El video es un MP4 1080p con subtítulos en español. Duración aproximada: 3:10.
 
-## Qué se verificó
+## Credenciales demo
 
-Ver `VERIFICATION.md`. Resumen: stack PASS, branding PASS, 8 skills PASS, chat RFQ **SKIPPED** (sin LLM key).
+| Perfil | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | `acme-admin-demo` |
+| Operador | `operador` | `acme-user-demo` |
 
-## Límites conocidos
+## Matriz Admin vs Usuario
 
-- Chat con modelo requiere `make setup` (cliente).
-- Known upstream #681: tools desde webui corren en contenedor webui (documentado en RUNBOOK).
-- Onboarding wizard en primer arranque (copy parcheado; completar una vez).
-- Fork GitHub `hermes-webui-acme` pendiente de push remoto si no existía.
+| Superficie | Admin | Usuario |
+|---|---:|---:|
+| Conversación | Sí | Sí |
+| Documentación `/workspace/docs` | Sí | Sí, solo lectura |
+| Procedimientos | Sí | No |
+| Memoria | Sí | No |
+| Tareas / Kanban / Lista actual | Sí | No |
+| Perfiles | Sí | No |
+| Registros | Sí | No |
+| Indicadores | Sí | No |
+| Configuración | Sí completa | No visible / 403 |
+| Proveedor/modelo/API keys/plugins/shutdown | Sí | No visible / 403 |
+| Dashboard Hermes externo | No visible | No visible |
 
-## Reproducir
+## Implementación
+
+Archivos clave:
+
+- `scripts/patch-webui-acme.sh` — palanca v5: branding + RBAC + i18n + tema.
+- `docker/webui/acme-industrial.css` — tema industrial de la GUI cliente.
+- `seed/acme-ui-config.yaml` — data shape de roles/superficies.
+- `scripts/verify-branding.sh` — verificación de marca con login admin.
+- `scripts/verify-spanish.sh` — verificación de español visible.
+- `docker/webui/Dockerfile` — aplica patch Acme durante build.
+- `docker-compose.yml` — env demo login + locale + workspace.
+
+## Verificación
+
+```text
+$ ./scripts/verify-branding.sh
+== ALL PASS ==
+
+$ ./scripts/verify-spanish.sh
+== ALL PASS ==
+```
+
+RBAC API:
+
+```text
+admin_status=admin
+user_status=usuario
+user_workspaces=/workspace/docs
+user_settings_post=403
+user_logs=403
+admin_settings=200
+admin_profiles=200
+admin_logs=200
+```
+
+## LLM
+
+No hay proveedor LLM configurado en el repo. La demo muestra el estado esperado:
+
+```text
+Modelo no configurado. Ejecute make setup / make setup-portal para configuración inicial.
+```
+
+Para respuestas reales:
 
 ```bash
-make build && make up
-make health
-./scripts/verify-branding.sh
-open http://localhost:8787
-make setup   # LLM key
+make setup
 ```
 
-## Anti-patterns evitados
+## Estado operativo
 
-- No reintroducir Open WebUI.
-- No usar OpenAI shim como UX principal.
-- No marcar done sin evidencia curl/grep.
+```text
+acme-agent  Up
+acme-webui  Up (healthy)
+```
+
+URL: `http://localhost:8787/login`
+
+## Commit
+
+Último commit funcional antes de este handoff:
+
+```text
+f80d557
+```

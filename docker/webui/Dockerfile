@@ -4,16 +4,19 @@
 # Build the Lever: clone upstream, apply scripts/patch-webui-branding.sh, bake image.
 
 FROM alpine:3.21 AS source
-RUN apk add --no-cache bash git librsvg
+RUN apk add --no-cache bash git librsvg python3
 WORKDIR /src
 ARG HERMES_WEBUI_SHA=dc90ec9be4f2691a60d2413350405f2758a340a2
 RUN git clone --depth 50 https://github.com/nesquena/hermes-webui.git . \
     && git checkout "${HERMES_WEBUI_SHA}"
 
-COPY scripts/patch-webui-branding.sh /patch-webui-branding.sh
+COPY scripts/patch-webui-branding.sh /scripts/patch-webui-branding.sh
+COPY scripts/patch-webui-acme.sh /scripts/patch-webui-acme.sh
+COPY docker/webui/acme-industrial.css /docker/webui/acme-industrial.css
+COPY seed/acme-ui-config.yaml /seed/acme-ui-config.yaml
 COPY seed/plugins/acme-admin/dashboard/dist/logo.svg /acme-logo.svg
-RUN chmod +x /patch-webui-branding.sh \
-    && ACME_LOGO=/acme-logo.svg /patch-webui-branding.sh /src
+RUN chmod +x /scripts/patch-webui-branding.sh /scripts/patch-webui-acme.sh \
+    && ACME_LOGO=/acme-logo.svg /scripts/patch-webui-acme.sh /src
 
 FROM python:3.12-slim
 
@@ -54,6 +57,8 @@ RUN echo "__version__ = '${HERMES_VERSION}'" > /apptoo/api/_version.py
 ENV HERMES_WEBUI_HOST=0.0.0.0
 ENV HERMES_WEBUI_PORT=8787
 ENV HERMES_WEBUI_BOT_NAME="Asistente Acme"
+ENV HERMES_WEBUI_DEFAULT_LOCALE=es-ES
+ENV HERMES_WEBUI_DEFAULT_WORKSPACE=/workspace/docs
 
 EXPOSE 8787
 

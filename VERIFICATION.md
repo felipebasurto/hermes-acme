@@ -1,96 +1,109 @@
-# Verification — Acme Agent v4
+# Verification — Acme Agent v5
 
-Fecha: 2026-06-16. Evidencia de comandos ejecutados en host local (Docker OrbStack).
+Fecha: 2026-06-16.
 
-## Cambio v3 → v4
+## Resultado
 
-| Aspecto | v3 | v4 |
-|---------|----|----|
-| GUI | Open WebUI chatbot :3000 | hermes-webui fork agent-native :8787 |
-| Wiring | OpenAI shim `/v1/chat/completions` | Gateway compartiendo `data/hermes` |
-| Licencia GUI | BSD-3 + cláusula marca | MIT fork |
-| Skills | 6 acme-* | 8 acme-* |
+| Criterio | Estado | Evidencia |
+|---|---|---|
+| UI español visible | PASS | `./scripts/verify-spanish.sh` |
+| Branding Acme sin upstream visible | PASS | `./scripts/verify-branding.sh` |
+| Admin con configuración completa | PASS | Manual GUI + API admin 200 |
+| Operador limitado | PASS | Manual GUI + `/api/logs` 403 |
+| Tema industrial | PASS | `static/acme-industrial.css` + video |
+| RFQ demo documentada | PASS | `DEMO-SCRIPTS.md` |
+| Video entregado | PASS | `/opt/cursor/artifacts/acme-v5-demo-admin-usuario-20260616-v2.mp4` |
 
-## Definition of DONE
+## Stack
 
-| # | Criterio | Estado | Evidencia |
-|---|----------|--------|-----------|
-| 1 | Open WebUI eliminado | **PASS** | `grep -ri open-webui docker-compose.yml README.md` → vacío |
-| 2 | acme-webui build + run | **PASS** | `docker images acme-hermes-webui:local`; compose ps Up healthy |
-| 3 | GUI agent-native | **PASS** | hermes-webui: sesiones, workspace mount, skills seed; no shim OpenAI como UX |
-| 4 | Forbidden brand absent :8787 | **PASS** | `./scripts/verify-branding.sh` → ALL PASS (output abajo) |
-| 5 | 6+ acme skills, no bundle | **PASS** | `ls data/hermes/skills \| grep acme \| wc -l` → 8 |
-| 6 | RFQ demo documentado | **PASS** | DEMO-SCRIPTS.md Script C actualizado para :8787 |
-| 7 | HANDOFF v4 + push | **PASS** | `git log origin/main -1` → `14dd06b` |
-
-## Comandos de verificación
-
-### Stack (SUBTASK C)
-
-```
+```text
 $ docker compose ps
-NAME         IMAGE                     STATUS
-acme-agent   acme-hermes-agent:local   Up
-acme-webui   acme-hermes-webui:local   Up (healthy)
-
-$ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8787/
-200
-
-$ grep -ri open-webui docker-compose.yml README.md && echo FAIL || echo PASS
-PASS
+NAME         STATUS                   PORTS
+acme-agent   Up 2 hours               0.0.0.0:8642->8642/tcp, [::]:8642->8642/tcp
+acme-webui   Up 2 minutes (healthy)   0.0.0.0:8787->8787/tcp, [::]:8787->8787/tcp
 ```
 
-### Branding (SUBTASK D)
+## Branding
 
-```
+```text
 $ ./scripts/verify-branding.sh
 == Branding verify @ http://localhost:8787 ==
+PASS [login] login page reachable
+PASS [auth] admin login role=admin
 PASS [index.html] no forbidden: hermes web|hermes control|open webui|nousresearch|nous research
 PASS [index.html-title] no forbidden: <title>[^<]*(hermes|nous|open webui)
 PASS [index.html] Acme title present
+PASS [index.html] industrial stylesheet referenced
+PASS [auth/status] Acme admin role present
 PASS [manifest.json] no forbidden: hermes|nous|open webui
 PASS [manifest.json] Acme name present
 PASS [favicon.svg] Acme logo marker present
-PASS [ui.js] no forbidden: ...
-PASS [panels.js] no forbidden: ...
-PASS [boot.js] no forbidden: ...
+PASS [ui.js] no forbidden: nousresearch|nous research|hermes web ui|hermes control center|open webui
+PASS [panels.js] no forbidden: nousresearch|nous research|hermes web ui|hermes control center|open webui
+PASS [boot.js] no forbidden: nousresearch|nous research|hermes web ui|hermes control center|open webui
+PASS [acme-industrial.css] Acme steel token present
 == ALL PASS ==
 ```
 
-### Build assert webui (SUBTASK B)
+## Español
 
+```text
+$ ./scripts/verify-spanish.sh
+== Spanish verify @ http://localhost:8787 ==
+PASS [login] contiene: Acceso al asistente de ofertas
+PASS [login] contiene: Usuario
+PASS [login] contiene: Contraseña demo
+PASS [login] sin inglés visible: Sign in|Enter your password|Invalid password|Connection failed
+PASS [auth] login admin correcto
+PASS [index] contiene: Acme Maquinaria Especial
+PASS [index] contiene: Conversación
+PASS [index] contiene: Documentación
+PASS [index] contiene: Procedimientos
+PASS [index] contiene: Configuración
+PASS [index] contiene: Escribe tu consulta de oferta
+PASS [index] sin inglés visible: Welcome to|Message Hermes|Filter conversations|New conversation|Search skills
+PASS [i18n] contiene: tab_chat: 'Conversación'
+PASS [i18n] contiene: tab_settings: 'Configuración'
+PASS [i18n] contiene: providers_section_title: 'Proveedor de modelo'
+PASS [i18n] contiene: Documentación Acme
+PASS [i18n-acme-overrides] sin inglés visible: TODO: translate|Session Toolsets|Welcome to Hermes Web UI|Search known tools across
+PASS [panels] contiene: Acceso reservado a administrador
+PASS [panels] contiene: Documentación Acme — solo lectura
+PASS [panels] sin inglés visible: Hermes Web UI|Hermes Control Center|Open WebUI
+PASS [boot] contiene: Acme Industrial
+PASS [boot] contiene: skin:'acme-industrial'
+PASS [boot] sin inglés visible: Message '\+name
+== ALL PASS ==
 ```
-$ docker run --rm acme-hermes-webui:local sh -c "grep -riE 'nousresearch|Nous Research' static/ | wc -l"
-0
+
+## RBAC API
+
+```text
+admin_status=admin
+user_status=usuario
+user_workspaces=/workspace/docs
+user_settings_post=403
+user_logs=403
+admin_settings=200
+admin_profiles=200
+admin_logs=200
 ```
 
-### Skills (SUBTASK E)
+## Manual GUI
 
+Manual testing confirmed:
+
+- Login page español e industrial.
+- Admin shows `ADMINISTRADOR`, full rail and Configuración.
+- Operador shows `OPERADOR`, only Conversación + Documentación.
+- `/api/logs` as operador returns `{"error":"Acceso reservado a administrador","acme_role":"usuario"}`.
+
+## Video
+
+Archivo final:
+
+```text
+/opt/cursor/artifacts/acme-v5-demo-admin-usuario-20260616-v2.mp4
 ```
-$ ls data/hermes/skills/ | grep acme | wc -l
-8
-```
 
-### E2E chat (SUBTASK F)
-
-```
-$ curl -s -H "Authorization: Bearer acme-demo-local-key" http://localhost:8642/v1/models
-{"object":"list","data":[{"id":"acme-agent",...}]}
-
-$ curl -s -X POST .../v1/chat/completions -d '{"model":"acme-agent","messages":[...]}'
-{"error":{"message":"...No inference provider configured..."}}
-```
-
-**Estado chat RFQ con LLM:** **SKIPPED** (sin API key en VM). Infra + branding PASS.
-
-Manual checklist GUI (http://localhost:8787):
-
-- [x] Carga 200, título Acme
-- [x] Sidebar sesiones visible
-- [x] Workspace `/workspace/docs` montado (company-docs)
-- [x] Sin strings forbidden en verify-branding
-- [ ] RFQ → BORRADOR con modelo (requiere `make setup`)
-
-### Onboarding
-
-Primer arranque puede mostrar wizard de configuración upstream. Copy parcheado a Acme en build. Completar wizard una vez; no re-aparece en mismo `data/hermes/webui/`.
+Revisión de video: PASS. El video muestra login, admin completo, settings, RFQ con modelo no configurado, operador reducido, 403 y cierre en español.

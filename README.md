@@ -1,65 +1,61 @@
-# Acme Agent — despliegue de referencia (v4)
+# Acme Agent — despliegue de referencia (v5)
 
-Agente de oficina técnica para **Acme Maquinaria Especial S.L.** (cliente industrial ficticio, Burgos). Convierte RFQ en **borrador de oferta técnica**. Los administrativos usan una **GUI de agente nativa** (sesiones, tools, workspace) en fork MIT de Hermes WebUI. El agente Hermes corre headless como gateway.
+Agente de oficina técnica para **Acme Maquinaria Especial S.L.** (cliente industrial ficticio, Burgos). Convierte RFQ en **borrador de oferta técnica** desde una GUI de agente industrial en español.
 
-**Sin API keys en el repo.** La key del modelo va en `./data/hermes/.env` vía `make setup`.
+## Qué cambia en v5
+
+- UI cliente `acme-webui` en **http://localhost:8787** con tema **Acme Industrial**.
+- Login demo con dos perfiles:
+  - `admin` / `acme-admin-demo`
+  - `operador` / `acme-user-demo`
+- **Administrador:** configuración completa, procedimientos, memoria, tareas, perfiles, registros y proveedor de modelo.
+- **Operador:** solo **Conversación** + **Documentación** (`/workspace/docs`, solo lectura).
+- Español forzado (`es-ES`) y tema dark único.
+
+> Sin proveedor LLM configurado, el chat puede mostrar “No inference provider configured”. Esto no bloquea la demo de UI/roles/documentación. El administrador configura el modelo en Configuración → Proveedor o con `make setup`.
 
 ## Quick start
 
 ```bash
-make build      # acme-hermes-agent:local + acme-hermes-webui:local
-make up         # acme-agent + acme-webui (two-container)
-make setup      # API key OpenRouter/OpenAI → data/hermes/.env
+make build
+make up
+make verify
 ```
 
-Abre la GUI Acme: **http://localhost:8787** (demo sin password).
+Abre **http://localhost:8787/login**.
 
-> Sin `make setup` la GUI carga, pero el agente responde "No inference provider configured" hasta que el cliente añade su key.
-
-```bash
-make health
-./scripts/verify-branding.sh
-```
-
-## Arquitectura (resumen)
+## Arquitectura
 
 ```
-navegador (admin) ──> acme-webui (hermes-webui fork, :8787)
-                          │  gateway nativo (sesiones, tools, workspace)
-                          ▼
-                      acme-agent (Hermes headless, gateway, dashboard OFF)
-                          │  persona + 8 skills + corpus
-                          ▼
-                      data/hermes  +  seed/company-docs
+navegador ──> acme-webui (:8787, UI industrial + RBAC)
+                  │
+                  ▼
+              acme-agent (gateway Hermes headless)
+                  │
+                  ▼
+              data/hermes + seed/company-docs (/workspace/docs ro)
 ```
 
-Detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+## Comandos
 
-## Layout
+| Comando | Uso |
+|---|---|
+| `make build` | Construye `acme-hermes-agent:local` y `acme-hermes-webui:local` |
+| `make up` | Siembra `seed/` y arranca los contenedores |
+| `make down` | Para el stack |
+| `make setup` | Configura credenciales reales de proveedor LLM |
+| `make verify` | Ejecuta branding + español |
+| `./scripts/verify-branding.sh` | Verifica marca Acme servida |
+| `./scripts/verify-spanish.sh` | Verifica superficies visibles en español |
 
-| Path | Propósito |
-|------|-----------|
-| `Dockerfile` | Fork parche → `acme-hermes-agent:local` |
-| `docker/webui/Dockerfile` | Fork hermes-webui → `acme-hermes-webui:local` |
-| `scripts/patch-webui-branding.sh` | White-label idempotente de la GUI |
-| `docker-compose.yml` | `acme-webui` + `acme-agent` |
-| `seed/skills/` | 8 skills Acme (`acme-*`) |
-| `seed/.no-bundled-skills` | Solo skills Acme (sin bundle ~73) |
-| `seed/company-docs/` | Corpus ficticio (`/workspace/docs` ro) |
-| `data/hermes/` | Volumen compartido (`.env`, `webui/`, sessions gitignored) |
+## Entregables cliente
 
-## Make targets
+- `DEMO-SCRIPTS.md` — guion v5 de demo en español.
+- `docs/RUNBOOK.md` — operación y troubleshooting.
+- `docs/ARCHITECTURE.md` — contrato de roles/superficies.
+- `VERIFICATION.md` — evidencia de build, RBAC y verificación.
+- `HANDOFF.md` — entrega final + referencia al video.
 
-- `make build` — construye agente + webui
-- `make up` / `make down` — stack two-container
-- `make setup` / `make setup-portal` — credenciales LLM
-- `make seed` / `make health` / `make logs` / `make logs-webui` / `make logs-agent` / `make shell`
+## Seguridad
 
-## Docs
-
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- [docs/RUNBOOK.md](docs/RUNBOOK.md)
-- [docs/CLIENT-PACK.md](docs/CLIENT-PACK.md)
-- [DEMO-SCRIPTS.md](DEMO-SCRIPTS.md)
-- [VERIFICATION.md](VERIFICATION.md)
-- [HANDOFF.md](HANDOFF.md)
+Las contraseñas incluidas son **solo demo local**. En producción: VPN/TLS, rotar tokens internos, definir contraseña real y configurar proveedor LLM fuera del repo (`data/hermes/.env`, gitignored).

@@ -1,58 +1,139 @@
-# Demo scripts — Acme Hermes v4
+# Demo scripts — Acme Agent v5
 
-## Script A — 5 minute executive demo
+## Demo cliente 5–6 minutos
 
-**Audience:** Gerente / dirección industrial ficticia  
-**Duration:** ~5 min
+**Objetivo:** mostrar interfaz industrial, español, dos roles y flujo RFQ documentado aunque el modelo LLM no esté configurado.
 
-1. README quick start: `make build` → `make up` → `make setup`.
-2. `make health` — `acme-agent` + `acme-webui` Up, :8787 HTTP 200.
-3. `./scripts/verify-branding.sh` — white-label PASS.
-4. Browser: **http://localhost:8787** — GUI agente Acme, sin password en demo.
-5. Señala sesiones en sidebar, workspace/docs, panel skills. Título **Acme Maquinaria Especial**.
-6. Nueva sesión → pega RFQ ejemplo-001 (Script C).
-7. Resalta tool cards si el agente invoca herramientas, BORRADOR, AC-2024-017, margen ≥ 18 %.
+### 0:00 — Arranque
 
-**Talking point:** GUI de agente (no chatbot genérico). Días de oferta → minutos de borrador.
-
-## Script B — OT deep dive (María)
-
-1. En webui: workspace browser → `/workspace/docs`.
-2. Walk `proyecto-AC-2024-017.md` vs RFQ Norte.
-3. Skills panel: `acme-rfq-a-oferta`, `acme-escalar-a-maria`.
-4. Checklist skill sobre el borrador.
-
-## Script C — RFQ ejemplo-001 (canonical)
-
-**Input** (`seed/company-docs/rfq/ejemplo-entrada-001.txt`):
-
+```bash
+make build
+make up
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8787/login
 ```
+
+Mensaje: “El stack arranca con `acme-agent` como gateway y `acme-webui` como panel cliente en español.”
+
+### 0:30 — Login administrador
+
+- URL: `http://localhost:8787/login`
+- Usuario: `admin`
+- Contraseña: `acme-admin-demo`
+
+Mostrar:
+
+- Header `Acme Maquinaria Especial`.
+- Chip **Administrador**.
+- Rail completo:
+  - Conversación
+  - Documentación
+  - Procedimientos
+  - Memoria
+  - Tareas / Kanban / Lista actual
+  - Perfiles
+  - Registros
+  - Indicadores
+  - Configuración
+
+### 2:00 — Configuración admin
+
+Entrar en **Configuración** y recorrer:
+
+- Conversación/modelo.
+- Proveedor.
+- Apariencia industrial Acme.
+- Sistema/gateway.
+
+Frase: “Aquí configura IT; el operador no ve esto.”
+
+### 2:30 — Documentación
+
+Abrir **Documentación** y mostrar corpus:
+
+- `/workspace/docs/proyecto-AC-2024-017.md`
+- `/workspace/docs/tarifas-mecanica.md`
+- `/workspace/docs/tarifas-automatizacion.md`
+
+Señalar:
+
+- `AC-2024-017`
+- 120 uds/min
+- plazo real 18 semanas
+- margen 21,4 %
+
+### 3:00 — RFQ admin
+
+En **Conversación**, pegar:
+
+```text
 Buenos días,
+
 Necesitamos línea de envasado para bandejas 400×300 mm, 120 uds/min,
 cambio de formato rápido. Ambiente lavado. Plazo 14 semanas.
 ¿Precio y plazo orientativo?
+
 Saludos, Compras — Hostelería Industrial Norte S.L.
 ```
 
-**Expected:**
+Si no hay LLM:
 
-- Cita **AC-2024-017**, plantilla v3, tarifas del corpus
-- Flag plazo 14 vs 18 semanas
-- **BORRADOR — REVISIÓN HUMANA OBLIGATORIA**
-- Margen ≥ 18 % o nota de escalada (`acme-escalar-a-maria`)
+- Mostrar error/banner discreto.
+- Decir: “La experiencia de demo no depende de la key. El administrador configura el proveedor después.”
 
-**Sin LLM:** infra + branding PASS; chat SKIPPED (ver VERIFICATION.md).
+Si hay LLM:
 
-## Script D — Reseed safety
+- Buscar `BORRADOR`.
+- Buscar `AC-2024-017`.
+- Buscar advertencia plazo 14 vs 18 semanas.
+- Buscar margen objetivo ≥ 18 %.
 
-1. Dummy `data/hermes/.env` con `TEST=1` y key LLM ficticia.
-2. `make seed` — preserva keys LLM, sincroniza `API_SERVER_KEY`.
+### 4:00 — Login operador
+
+Logout y login:
+
+- Usuario: `operador`
+- Contraseña: `acme-user-demo`
+
+Mostrar:
+
+- Chip **Operador**.
+- Rail reducido: solo **Conversación** y **Documentación**.
+- No hay rueda de Configuración.
+- No hay selector modelo/API keys/plugins/shutdown.
+
+Intento técnico:
+
+```bash
+curl -b cookies-operador.txt -w "%{http_code}\n" http://localhost:8787/api/logs
+```
+
+Resultado esperado: `403`.
+
+### 5:20 — RFQ operador
+
+Pegar la misma RFQ. El operador trabaja desde chat y documentación, sin superficies de ingeniería.
+
+### 5:45 — Verificación
+
+```bash
+./scripts/verify-branding.sh
+./scripts/verify-spanish.sh
+```
+
+Ambos deben acabar en:
+
+```text
+== ALL PASS ==
+```
+
+### 6:00 — Cierre
+
+“Interfaz industrial, español, dos roles, lista para planta Acme Burgos.”
 
 ## Reset demo
 
 ```bash
 make down
-rm -rf data/hermes
+sudo rm -rf data/hermes
 make up
-make setup   # si demo chat con modelo
 ```
