@@ -82,6 +82,7 @@ check_absent "panels" "$PANELS" 'Hermes Web UI|Hermes Control Center|Open WebUI'
 BOOT=$(curl -sf --max-time 10 -b "$COOKIE_JAR" "${BASE_URL}/static/boot.js" || { echo "FAIL fetch boot"; exit 1; })
 check_contains "boot" "$BOOT" 'Acme Industrial'
 check_contains "boot" "$BOOT" "skin:'acme-industrial'"
+check_absent "boot" "$BOOT" "Message '\\+name"
 
 if [[ "$FAIL" -eq 0 ]]; then
   echo "== ALL PASS =="

@@ -1003,6 +1003,7 @@ boot = regex_once(
     "function _normalizeAppearance(theme,skin){\n  return {theme:'dark',skin:'acme-industrial'};\n}",
     "boot normalize appearance",
 )
+boot = boot.replace("if(msg) msg.placeholder='Message '+name+'\\u2026';", "if(msg) msg.placeholder='Escribe tu consulta de oferta…';")
 write("static/boot.js", boot)
 
 
