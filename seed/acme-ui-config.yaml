@@ -1,6 +1,16 @@
-version: 5
+version: 6
 locale: es-ES
 theme: acme-industrial
+# v6 UX: Claude/Codex-familiar shell. No icon rail. Navigation lives in the
+# sidebar footer (Documentación, and Configuración for admin). The conversation
+# list is the home surface; the brand lockup returns to it.
+layout:
+  shell: claude-like
+  rail: hidden
+  sidebar_width_px: 272
+  sidebar_footer_actions:
+    usuario: [workspaces]
+    admin: [workspaces, settings]
 workspace:
   docs_path: /workspace/docs
   readonly_for: [usuario]

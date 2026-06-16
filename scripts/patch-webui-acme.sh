@@ -1140,7 +1140,53 @@ fallback_replacements = {
 }
 for old, new in fallback_replacements.items():
     index = index.replace(old, new)
+
+# Replace the upstream Hermes caduceus empty-state mark with the Acme triangle.
+index = regex_once(
+    index,
+    r'<div class="empty-logo">.*?</svg></div>',
+    '<div class="empty-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="80" height="80" aria-label="Acme"><path d="M10 52 L32 10 L54 52 Z" fill="none" stroke="#f59e0b" stroke-width="3.2" stroke-linejoin="round"/><path d="M21 52 L43 52" stroke="#2563eb" stroke-width="3.2" stroke-linecap="round"/></svg></div>',
+    "index empty-state Acme mark",
+)
+
+# Make the brand lockup a home affordance back to the conversation list.
+index = replace_once(
+    index,
+    '<div class="app-titlebar-inner">',
+    '<div class="app-titlebar-inner" onclick="if(typeof switchPanel===\'function\')switchPanel(\'chat\')" role="button" tabindex="0" title="Conversaciones">',
+    "index brand home click",
+)
+
+# Acme sidebar footer: the only navigation operators and admins need.
+acme_sidebar_foot = '''  <div class="acme-sidebar-foot" id="acmeSidebarFoot">
+    <button class="acme-foot-btn" type="button" data-acme-foot="workspaces" onclick="switchPanel('workspaces')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Documentación</span>
+    </button>
+    <button class="acme-foot-btn acme-admin-only" type="button" data-acme-foot="settings" onclick="switchPanel('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Configuración</span>
+    </button>
+    <div class="acme-foot-role"><span class="acme-foot-role-dot" aria-hidden="true"></span><span id="acmeFootRole">Operador</span></div>
+  </div>
+'''
+if 'acme-sidebar-foot' not in index:
+    index = replace_once(
+        index,
+        '  <div class="resize-handle" id="sidebarResize"></div>\n  </aside>',
+        acme_sidebar_foot + '  <div class="resize-handle" id="sidebarResize"></div>\n  </aside>',
+        "index sidebar footer",
+    )
 write("static/index.html", index)
+
+# Square Acme mark used by the titlebar brand (favicon.svg is a wide lockup).
+write(
+    "static/favicon-mark.svg",
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Acme">'
+    '<path d="M8 39 L24 8 L40 39 Z" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linejoin="round"/>'
+    '<path d="M16 39 L32 39" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>'
+    '</svg>\n',
+)
 
 
 # ── static/boot.js: force one dark Acme skin ─────────────────────────────────
@@ -1186,6 +1232,8 @@ function acmeApplyRole(){
   document.documentElement.dataset.acmeRole=role;
   const chip=document.getElementById('acmeRoleChip');
   if(chip) chip.textContent=role==='admin'?'Administrador':'Operador';
+  const footRole=document.getElementById('acmeFootRole');
+  if(footRole) footRole.textContent=role==='admin'?'Administrador':'Operador';
   document.querySelectorAll('[data-panel]').forEach(el=>{
     const panel=el.dataset.panel;
     if(!panel)return;
@@ -1193,6 +1241,18 @@ function acmeApplyRole(){
     if(!acmePanelAllowed(panel)) el.setAttribute('aria-hidden','true');
     else el.removeAttribute('aria-hidden');
   });
+  acmeSyncFooter();
+}
+
+function acmeSyncFooter(){
+  try{
+    const main=document.querySelector('main.main');
+    const cls=main?String(main.className):'';
+    document.querySelectorAll('#acmeSidebarFoot .acme-foot-btn').forEach(btn=>{
+      const key=btn.getAttribute('data-acme-foot');
+      btn.classList.toggle('active', !!key && cls.indexOf('showing-'+key)!==-1);
+    });
+  }catch(_){}
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -1209,7 +1269,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
       .catch(()=>acmeApplyRole());
   }catch(_){acmeApplyRole();}
   setInterval(acmeTranslateRuntimeCopy, 700);
+  setInterval(acmeSyncFooter, 400);
   acmeTranslateRuntimeCopy();
+  acmeSyncFooter();
 });
 
 function acmeTranslateRuntimeCopy(){
@@ -1323,8 +1385,8 @@ Object.assign(LOCALES.es, {
   tab_dashboard: 'Panel externo',
   new_conversation: 'Nueva conversación',
   filter_conversations: 'Filtrar conversaciones...',
-  empty_title: 'Pega una RFQ para generar borrador',
-  empty_subtitle: 'El asistente preparará un borrador técnico con referencias Acme. Todo queda marcado para revisión humana.',
+  empty_title: 'Pega una consulta de oferta o RFQ para empezar',
+  empty_subtitle: 'Por ejemplo: «Prepara un borrador para la RFQ de PERFISA, 3 células de soldadura». El asistente redacta con referencias Acme y lo marca como BORRADOR para revisión humana.',
   suggest_files: 'Mostrar documentación Acme',
   suggest_schedule: 'Revisar tareas de oferta',
   suggest_plan: 'Preparar borrador de oferta',
@@ -1356,6 +1418,11 @@ Object.assign(LOCALES.es, {
   workspace_drag_hint: 'Reordenar documentación',
   workspace_remove_confirm_title: 'Quitar documentación',
   workspace_remove_confirm_message: (path) => `Quitar ${path} de la lista de documentación?`,
+  workspaces_empty_title: 'Elige documentación',
+  workspaces_empty_sub: 'Selecciona una fuente en la barra lateral para ver sus archivos. El operador solo lee /workspace/docs.',
+  settings_section_conversation_title: 'Conversación',
+  settings_dropdown_conversation: 'Conversación',
+  active_conversation_none: 'No hay ninguna conversación activa.',
   search_skills: 'Buscar procedimientos...',
   skills_empty: 'No hay procedimientos disponibles.',
   new_skill: 'Nuevo procedimiento',
