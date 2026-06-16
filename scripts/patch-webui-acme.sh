@@ -1066,6 +1066,9 @@ function acmeTranslateRuntimeCopy(){
      'Modelo no configurado.'],
     ['Run `hermes model` to select a provider, or run `hermes setup` for first-time configuration.',
      'El administrador debe completar Configuración → Proveedor antes de generar borradores.'],
+    ['Run ', 'Ejecute '],
+    [' to select a provider, or run ', ' para seleccionar proveedor, o ejecute '],
+    [' for first-time configuration.', ' para la configuración inicial.'],
     ['Provider details', 'Detalles del proveedor'],
     ['Setup Required', 'Configuración pendiente'],
     ['No provider configured', 'Proveedor no configurado']
