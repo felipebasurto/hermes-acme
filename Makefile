@@ -2,7 +2,7 @@
 # make up DOCKER_COMPOSE="docker compose"
 DOCKER_COMPOSE := docker compose
 
-.PHONY: build seed up down setup setup-portal logs logs-webui logs-agent health shell
+.PHONY: build seed up down setup setup-portal logs logs-webui logs-agent health shell verify verify-spanish
 
 build:
 	$(DOCKER_COMPOSE) build
@@ -33,6 +33,13 @@ logs-agent:
 
 health:
 	./scripts/healthcheck.sh
+
+verify:
+	./scripts/verify-branding.sh
+	./scripts/verify-spanish.sh
+
+verify-spanish:
+	./scripts/verify-spanish.sh
 
 shell:
 	$(DOCKER_COMPOSE) exec acme-agent bash

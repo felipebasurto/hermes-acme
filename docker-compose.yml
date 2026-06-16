@@ -48,6 +48,14 @@ services:
       HERMES_WEBUI_PORT: "8787"
       HERMES_WEBUI_STATE_DIR: /home/hermeswebui/.hermes/webui
       HERMES_WEBUI_BOT_NAME: "Asistente Acme"
+      HERMES_WEBUI_DEFAULT_LOCALE: "es-ES"
+      HERMES_WEBUI_DEFAULT_WORKSPACE: "/workspace/docs"
+      ACME_UI_DEMO_LOGIN: "1"
+      ACME_ADMIN_USERNAME: "admin"
+      ACME_ADMIN_PASSWORD: "acme-admin-demo"
+      ACME_USER_USERNAME: "operador"
+      ACME_USER_PASSWORD: "acme-user-demo"
+      ACME_USER_WORKSPACE: "/workspace/docs"
       WANTED_UID: ${UID:-1000}
       WANTED_GID: ${GID:-1000}
     networks:
