@@ -400,7 +400,7 @@ def _acme_deny_if_needed(handler, method: str, parsed) -> bool:
         return False
     if path.startswith(("/static/", "/session/static/")):
         return False
-    if path == "/api/auth/status" or path == "/api/auth/logout":
+    if path in {"/api/auth/status", "/api/auth/login", "/api/auth/logout"}:
         return False
     if method == "GET":
         denied_exact = {
@@ -435,6 +435,7 @@ def _acme_deny_if_needed(handler, method: str, parsed) -> bool:
             return True
         return False
     allowed_posts = {
+        "/api/auth/login",
         "/api/auth/logout",
         "/api/session/new",
         "/api/session/rename",
