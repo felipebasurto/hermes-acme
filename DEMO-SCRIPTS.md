@@ -1,31 +1,30 @@
-# Demo scripts — Acme Hermes
+# Demo scripts — Acme Hermes v4
 
 ## Script A — 5 minute executive demo
 
 **Audience:** Gerente / dirección industrial ficticia  
 **Duration:** ~5 min
 
-1. Show README quick start (3 pasos: `make build` → `make up` → `make setup`).
-2. `make health` — contenedores verdes, GUI :3000 HTTP 200, API agente :8642 OK.
-3. Browser: **http://localhost:3000** — la GUI web Acme abre directo, **sin login**, **sin terminal**.
-4. Señala la marca Acme ("Acme Maquinaria Especial") y el modelo `acme-agent` en el selector. Cierra el modal de novedades si aparece ("Okay, Let's Go!").
-5. Explica que la key del modelo solo vive en `./data/hermes/.env` tras `make setup`.
-6. Si hay setup: pega la RFQ ejemplo-001 en el chat → borrador en ~1–2 min.
-7. Resalta **BORRADOR**, cita de AC-2024-017 y la regla de margen ≥ 18 %.
+1. README quick start: `make build` → `make up` → `make setup`.
+2. `make health` — `acme-agent` + `acme-webui` Up, :8787 HTTP 200.
+3. `./scripts/verify-branding.sh` — white-label PASS.
+4. Browser: **http://localhost:8787** — GUI agente Acme, sin password en demo.
+5. Señala sesiones en sidebar, workspace/docs, panel skills. Título **Acme Maquinaria Especial**.
+6. Nueva sesión → pega RFQ ejemplo-001 (Script C).
+7. Resalta tool cards si el agente invoca herramientas, BORRADOR, AC-2024-017, margen ≥ 18 %.
 
-**Talking point:** "Días de oferta → minutos de borrador; humano sigue mandando."
+**Talking point:** GUI de agente (no chatbot genérico). Días de oferta → minutos de borrador.
 
 ## Script B — OT deep dive (María)
 
-1. Open `/workspace/docs` corpus (via chat or `make shell`).
+1. En webui: workspace browser → `/workspace/docs`.
 2. Walk `proyecto-AC-2024-017.md` vs RFQ Norte.
-3. Show `flujo-oferta.md` complexity factors.
-4. Invoke skill narrative: `/acme-rfq-a-oferta` or natural language equivalent.
-5. Run checklist skill on output — table OK/PENDIENTE.
+3. Skills panel: `acme-rfq-a-oferta`, `acme-escalar-a-maria`.
+4. Checklist skill sobre el borrador.
 
 ## Script C — RFQ ejemplo-001 (canonical)
 
-**Input** (from `seed/company-docs/rfq/ejemplo-entrada-001.txt`):
+**Input** (`seed/company-docs/rfq/ejemplo-entrada-001.txt`):
 
 ```
 Buenos días,
@@ -35,23 +34,19 @@ cambio de formato rápido. Ambiente lavado. Plazo 14 semanas.
 Saludos, Compras — Hostelería Industrial Norte S.L.
 ```
 
-**Expected agent behavior:**
+**Expected:**
 
-- Ask/clarify missing details OR document assumptions explicitly
-- Cite **AC-2024-017** as analog
-- Use `oferta-acme-v3.md` section structure
-- Pull rates from tarifas docs (no invented unit prices)
-- Flag 14 weeks vs 18 weeks actual on AC-2024-017
-- Mark **BORRADOR — REVISIÓN HUMANA OBLIGATORIA**
-- Show margen ≥ 18 % or escalation note
+- Cita **AC-2024-017**, plantilla v3, tarifas del corpus
+- Flag plazo 14 vs 18 semanas
+- **BORRADOR — REVISIÓN HUMANA OBLIGATORIA**
+- Margen ≥ 18 % o nota de escalada (`acme-escalar-a-maria`)
 
-**If LLM not configured:** state demo stops at infrastructure; run `make setup`.
+**Sin LLM:** infra + branding PASS; chat SKIPPED (ver VERIFICATION.md).
 
 ## Script D — Reseed safety
 
-1. Create dummy `data/hermes/.env` with `TEST=1`
-2. `make seed`
-3. Confirm `.env` still contains `TEST=1`
+1. Dummy `data/hermes/.env` con `TEST=1` y key LLM ficticia.
+2. `make seed` — preserva keys LLM, sincroniza `API_SERVER_KEY`.
 
 ## Reset demo
 
@@ -59,5 +54,5 @@ Saludos, Compras — Hostelería Industrial Norte S.L.
 make down
 rm -rf data/hermes
 make up
-make setup   # if chat demo needed
+make setup   # si demo chat con modelo
 ```

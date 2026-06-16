@@ -1,74 +1,83 @@
-# Runbook — Acme Agent v3
+# Runbook — Acme Agent v4
 
 ## Prerequisitos
 
-- Docker Engine + Compose v2 (`docker compose`). El `Makefile` usa `docker compose` por defecto.
-- Puertos libres en el host: **3000** (GUI Acme) y **8642** (API del agente).
+- Docker Engine + Compose v2 (`docker compose`).
+- Puertos libres: **8787** (GUI Acme) y **8642** (API agente, debug).
 
 ## Primer arranque
 
 ```bash
-make build        # imagen fork local del agente
-make up           # GUI + agente headless
-make setup        # interactivo — escribe ./data/hermes/.env con la API key del modelo
+make build
+make up
+make setup        # interactivo — API key del modelo → data/hermes/.env
 make health
+./scripts/verify-branding.sh
 ```
 
-GUI: **http://localhost:3000** (demo sin login).
+GUI: **http://localhost:8787** (demo sin `HERMES_WEBUI_PASSWORD`).
+
+## Two-container ops
+
+| Contenedor | Rol | Volumen clave |
+|------------|-----|---------------|
+| `acme-agent` | Gateway Hermes | `./data/hermes` → `/opt/data`, `hermes-agent-src` → `/opt/hermes` |
+| `acme-webui` | GUI agente | `./data/hermes` → `/home/hermeswebui/.hermes`, agent src ro |
+
+Estado WebUI: `./data/hermes/webui/` (`HERMES_WEBUI_STATE_DIR`).
+
+### Upgrade imagen agente
+
+Tras `docker pull` o rebuild del agente, el volumen `hermes-agent-src` puede quedar stale (upstream #681). Procedimiento:
+
+```bash
+make down
+docker volume rm hermes-test_hermes-agent-src   # prefijo = nombre del proyecto compose
+make build && make up
+```
 
 ## Seguridad (demo vs producción)
 
-- **Demo LAN:** la GUI corre con `WEBUI_AUTH=false` (sin login) y el agente no expone dashboard. Aceptable **solo en LAN/host de confianza**.
-- **Producción:** no exponer `:3000` ni `:8642` abiertos. Poner la GUI detrás de **VPN** (WireGuard/Tailscale), **reverse proxy con TLS + auth/SSO**, y activar el login de Open WebUI (`WEBUI_AUTH=true`). Rotar `API_SERVER_KEY`. El `:8642` del agente debe quedar solo en la red interna de Docker.
+- **Demo LAN:** sin password en webui. Solo red de confianza.
+- **Producción:** `HERMES_WEBUI_PASSWORD`, VPN/TLS, rotar `API_SERVER_KEY`. No publicar `:8642` fuera de Docker.
 
-## Configurar modelo (una vez)
+## Configurar modelo
 
 | Comando | Cuándo |
 |---------|--------|
-| `make setup` | Pegar API key (OpenRouter/OpenAI) en el asistente |
-| `make setup-portal` | OAuth Nous Portal one-shot |
+| `make setup` | API key OpenRouter/OpenAI |
+| `make setup-portal` | OAuth portal one-shot |
 
-La key vive **solo** en `./data/hermes/.env` (gitignored). Hasta entonces el chat devuelve "proveedor no configurado".
+`scripts/seed-volume.sh` sincroniza `API_SERVER_KEY` con compose sin pisar keys LLM.
 
-## Reseed tras git pull
+## Reseed
 
 ```bash
 make seed && make up
 ```
 
-`seed-volume.sh` usa `rsync` y nunca sobrescribe `.env`. El marcador `.no-bundled-skills` se siembra desde `seed/` y evita los ~73 skills del bundle.
+Limpio: `make down && rm -rf data/hermes && make up`.
 
-> Si el volumen ya estaba poblado (el contenedor lo dejó con uid 10000), un reseed limpio es: `make down && sudo rm -rf data/hermes && make up`.
-
-## Logs y shell
+## Logs
 
 ```bash
-make logs                              # todos los servicios
-docker compose logs -f acme-agent      # solo el agente
-make shell                             # bash dentro de acme-agent
-```
-
-## Parar
-
-```bash
-make down
+make logs-webui
+make logs-agent
+make shell    # bash en acme-agent
 ```
 
 ## Troubleshooting
 
 | Síntoma | Acción |
 |---------|--------|
-| GUI no carga | `docker compose ps`; mira `acme-chat`; `curl -s -o /dev/null -w "%{http_code}" localhost:3000` |
-| Modal "What's New" con texto Open WebUI | Changelog upstream de primer arranque; se cierra con "Okay, Let's Go!". El descarte se guarda en el localStorage del navegador (reaparece en un navegador/perfil nuevo, no para un usuario que vuelve). Atribución OSS exigida por licencia. |
-| Chat sin respuesta / "proveedor no configurado" | Ejecuta `make setup`; confirma `data/hermes/.env` |
-| El selector muestra otro modelo | Debe ser `acme-agent` (`API_SERVER_MODEL_NAME`); reinicia `acme-agent` |
-| Aparecen ~73 skills | Falta el marcador; `make down && sudo rm -rf data/hermes && make up` |
-| Puerto ocupado | Cambia el mapeo de puertos en `docker-compose.yml` |
+| GUI no carga | `docker compose ps`; `curl -w '%{http_code}' -o /dev/null localhost:8787` |
+| Onboarding "Hermes" residual | Completar onboarding una vez; strings parcheados en build. Revisar `verify-branding.sh`. |
+| Chat sin modelo | `make setup`; revisar `data/hermes/.env` |
+| ~73 skills bundled | `make down && rm -rf data/hermes && make up` |
+| Workspace vacío | Confirmar mount `./seed/company-docs:/workspace/docs:ro` |
 
 ## Backup
 
 ```bash
-tar czf acme-agent-backup.tgz data/hermes/ data/open-webui/
+tar czf acme-agent-backup.tgz data/hermes/
 ```
-
-Excluir de backups compartidos si `.env` contiene keys productivas.

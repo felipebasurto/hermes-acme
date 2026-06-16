@@ -1,65 +1,65 @@
-# Acme Agent — despliegue de referencia (v3)
+# Acme Agent — despliegue de referencia (v4)
 
-Agente de oficina técnica para **Acme Maquinaria Especial S.L.** (cliente industrial ficticio, Burgos) que convierte RFQ en **borrador de oferta técnica**. Los administrativos usan una **GUI web de chat** (sin terminal, sin login en demo); el agente Hermes corre headless detrás, con marca upstream parcheada y solo skills Acme.
+Agente de oficina técnica para **Acme Maquinaria Especial S.L.** (cliente industrial ficticio, Burgos). Convierte RFQ en **borrador de oferta técnica**. Los administrativos usan una **GUI de agente nativa** (sesiones, tools, workspace) en fork MIT de Hermes WebUI. El agente Hermes corre headless como gateway.
 
 **Sin API keys en el repo.** La key del modelo va en `./data/hermes/.env` vía `make setup`.
 
-## Quick start (3 pasos)
+## Quick start
 
 ```bash
-make build      # construye la imagen fork local del agente (acme-hermes-agent:local)
-make up         # arranca GUI (acme-chat) + agente headless (acme-agent)
-make setup      # una vez: asistente del agente — API key (OpenRouter/OpenAI) → data/hermes/.env
+make build      # acme-hermes-agent:local + acme-hermes-webui:local
+make up         # acme-agent + acme-webui (two-container)
+make setup      # API key OpenRouter/OpenAI → data/hermes/.env
 ```
 
-Abre la GUI Acme: **http://localhost:3000** (demo sin login). Escribe la RFQ en el chat.
+Abre la GUI Acme: **http://localhost:8787** (demo sin password).
 
-> Sin `make setup` la GUI carga y acepta mensajes, pero el agente responde "proveedor no configurado" hasta que el cliente añade su key.
-
-Smoke check:
+> Sin `make setup` la GUI carga, pero el agente responde "No inference provider configured" hasta que el cliente añade su key.
 
 ```bash
 make health
+./scripts/verify-branding.sh
 ```
 
 ## Arquitectura (resumen)
 
 ```
-navegador (admin) ──> acme-chat (Open WebUI, :3000, marca Acme, sin login)
-                          │  POST /v1/chat/completions
+navegador (admin) ──> acme-webui (hermes-webui fork, :8787)
+                          │  gateway nativo (sesiones, tools, workspace)
                           ▼
-                      acme-agent (Hermes headless, :8642/v1, dashboard OFF)
-                          │  persona + 6 skills + corpus
+                      acme-agent (Hermes headless, gateway, dashboard OFF)
+                          │  persona + 8 skills + corpus
                           ▼
-                      data/hermes  +  seed/company-docs (AC-2024-017, tarifas, plantilla)
+                      data/hermes  +  seed/company-docs
 ```
 
-Detalle y decisión de GUI en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Detalle en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Layout
 
 | Path | Propósito |
 |------|-----------|
-| `Dockerfile` | Fork de parche → `acme-hermes-agent:local` (marca upstream parcheada) |
-| `docker-compose.yml` | `acme-chat` (GUI) + `acme-agent` (Hermes headless) |
-| `seed/skills/` | 6 skills Acme (`acme-*`) en formato SKILL.md |
-| `seed/.no-bundled-skills` | Marcador: solo skills Acme (sin los ~73 del bundle) |
-| `seed/company-docs/` | Corpus ficticio (montado ro en `/workspace/docs`) |
-| `seed/dashboard-themes/acme.yaml` | Tema Acme (si se reactivara el dashboard interno) |
-| `data/hermes/` | Volumen runtime (`.env` y `sessions/` gitignored) |
+| `Dockerfile` | Fork parche → `acme-hermes-agent:local` |
+| `docker/webui/Dockerfile` | Fork hermes-webui → `acme-hermes-webui:local` |
+| `scripts/patch-webui-branding.sh` | White-label idempotente de la GUI |
+| `docker-compose.yml` | `acme-webui` + `acme-agent` |
+| `seed/skills/` | 8 skills Acme (`acme-*`) |
+| `seed/.no-bundled-skills` | Solo skills Acme (sin bundle ~73) |
+| `seed/company-docs/` | Corpus ficticio (`/workspace/docs` ro) |
+| `data/hermes/` | Volumen compartido (`.env`, `webui/`, sessions gitignored) |
 
 ## Make targets
 
-- `make build` — construye la imagen fork del agente
-- `make up` / `make down` — arranca/para el stack
-- `make setup` / `make setup-portal` — credenciales del modelo (no van a git)
-- `make seed` / `make health` / `make logs` / `make shell`
+- `make build` — construye agente + webui
+- `make up` / `make down` — stack two-container
+- `make setup` / `make setup-portal` — credenciales LLM
+- `make seed` / `make health` / `make logs` / `make logs-webui` / `make logs-agent` / `make shell`
 
 ## Docs
 
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — decisión GUI, diagrama, componentes
-- [docs/RUNBOOK.md](docs/RUNBOOK.md) — operación, demo LAN vs producción
-- [docs/CLIENT-PACK.md](docs/CLIENT-PACK.md) — qué se entrega al cliente
-- [DEMO-SCRIPTS.md](DEMO-SCRIPTS.md) — guion de demo (RFQ por la GUI)
-- [VERIFICATION.md](VERIFICATION.md) — checklist con evidencia v3
-- [HANDOFF.md](HANDOFF.md) — notas de traspaso v3
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/RUNBOOK.md](docs/RUNBOOK.md)
+- [docs/CLIENT-PACK.md](docs/CLIENT-PACK.md)
+- [DEMO-SCRIPTS.md](DEMO-SCRIPTS.md)
+- [VERIFICATION.md](VERIFICATION.md)
+- [HANDOFF.md](HANDOFF.md)
