@@ -960,6 +960,7 @@ fallback_replacements = {
     'placeholder="Filter conversations..."': 'placeholder="Filtrar conversaciones..."',
     'placeholder="Search skills..."': 'placeholder="Buscar procedimientos..."',
     'placeholder="Message Hermes…"': 'placeholder="Escribe tu consulta de oferta…"',
+    'placeholder="Escribe tu mensaje…"': 'placeholder="Escribe tu consulta de oferta…"',
     'Ask anything, run commands, explore files, or manage your scheduled tasks.': 'Pega una RFQ para generar un borrador de oferta técnica.',
     'What files are in this workspace?': 'Mostrar documentación Acme',
     "What's on my schedule today?": 'Revisar tareas de oferta',
@@ -972,6 +973,15 @@ fallback_replacements = {
     'Switch workspace': 'Cambiar documentación',
     'Workspace, model, reasoning, and context settings': 'Documentación y contexto',
     'Send message': 'Enviar consulta',
+    'Used for new conversations. Existing conversations keep their selected model.': 'Usado en nuevas conversaciones. Las conversaciones existentes conservan su modelo.',
+    'Welcome to Acme Maquinaria Especial': 'Bienvenido al Panel Acme',
+    'The gateway heartbeat failed. Messages may not be delivered until it comes back.': 'El gateway no responde. Los mensajes pueden esperar hasta que vuelva.',
+    'Clear conversation filter': 'Limpiar filtro de conversaciones',
+    'Search tasks': 'Buscar tareas',
+    'New task': 'Nueva tarea',
+    'Type your response…': 'Escribe tu respuesta…',
+    'Enter new password…': 'Nueva contraseña…',
+    'Search tools by name, server, or description…': 'Buscar herramientas por nombre, servidor o descripción…',
 }
 for old, new in fallback_replacements.items():
     index = index.replace(old, new)
