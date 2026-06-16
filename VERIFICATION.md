@@ -21,7 +21,7 @@ Fecha: 2026-06-16. Evidencia de comandos ejecutados en host local (Docker OrbSta
 | 4 | Forbidden brand absent :8787 | **PASS** | `./scripts/verify-branding.sh` → ALL PASS (output abajo) |
 | 5 | 6+ acme skills, no bundle | **PASS** | `ls data/hermes/skills \| grep acme \| wc -l` → 8 |
 | 6 | RFQ demo documentado | **PASS** | DEMO-SCRIPTS.md Script C actualizado para :8787 |
-| 7 | HANDOFF v4 + push | **PENDING** | commit local; push en curso |
+| 7 | HANDOFF v4 + push | **PASS** | `git log origin/main -1` → `14dd06b` |
 
 ## Comandos de verificación
 
