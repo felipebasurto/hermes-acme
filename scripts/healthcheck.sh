@@ -10,8 +10,8 @@ echo "== Contenedores =="
 $DC ps
 
 echo ""
-echo "== GUI Acme :3000 (Open WebUI, demo sin login — expect 200) =="
-curl -s -o /dev/null -w "HTTP %{http_code}\n" --max-time 6 http://localhost:3000/ || true
+echo "== GUI Acme :8787 (hermes-webui fork, demo sin password — expect 200) =="
+curl -s -o /dev/null -w "HTTP %{http_code}\n" --max-time 10 http://localhost:8787/ || true
 
 echo ""
 echo "== Agente API OpenAI-compatible :8642/v1/models =="
@@ -21,10 +21,12 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" --max-time 6 \
 
 echo ""
 echo "== Volumen .env (API keys del modelo tras make setup) =="
-if [[ -f data/hermes/.env ]]; then
-  echo "data/hermes/.env existe (modelo configurado)"
+if [[ -f data/hermes/.env ]] && grep -qE '^(OPENROUTER_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY)=' data/hermes/.env 2>/dev/null; then
+  echo "data/hermes/.env tiene key de modelo configurada"
+elif [[ -f data/hermes/.env ]]; then
+  echo "data/hermes/.env existe (solo token interno — ejecutar make setup para LLM)"
 else
-  echo "data/hermes/.env ausente — ejecutar: make setup (el chat queda en 'setup required' hasta entonces)"
+  echo "data/hermes/.env ausente — ejecutar: make up && make setup"
 fi
 
 echo ""

@@ -1,8 +1,5 @@
 services:
-  # --- Agente Hermes headless (backend, sin UI de cliente) ---
-  # Imagen fork local (ver Dockerfile): marca upstream parcheada en assets servidos.
-  # Dashboard DESACTIVADO (HERMES_DASHBOARD=0): el cliente nunca ve la TUI/xterm.
-  # Expone API OpenAI-compatible en :8642/v1 que ejecuta al agente (skills, RFQ).
+  # --- Agente Hermes headless (gateway backend) ---
   acme-agent:
     build:
       context: .
@@ -12,43 +9,53 @@ services:
     restart: unless-stopped
     command: gateway run
     ports:
-      - "8642:8642"   # API OpenAI-compatible (publicado para debug/verificación)
+      - "8642:8642"
     volumes:
       - ./data/hermes:/opt/data
+      - hermes-agent-src:/opt/hermes
       - ./seed/company-docs:/workspace/docs:ro
     environment:
+      HERMES_HOME: /opt/data
       HERMES_DASHBOARD: "0"
       API_SERVER_ENABLED: "true"
       API_SERVER_HOST: "0.0.0.0"
-      # Token interno LAN entre la GUI y el agente (NO es una API key de LLM).
-      # Rotar en producción. La key del modelo va en data/hermes/.env (make setup).
       API_SERVER_KEY: "acme-demo-local-key"
-      # Nombre de modelo anunciado en /v1/models (lo que ve el cliente en el
-      # selector de la GUI). Evita exponer "hermes-agent".
       API_SERVER_MODEL_NAME: "acme-agent"
+      HERMES_UID: ${UID:-1000}
+      HERMES_GID: ${GID:-1000}
+    networks:
+      - acme-net
 
-  # --- GUI de chat para administrativos (superficie de cliente) ---
-  # Open WebUI (OSS) apuntando al endpoint OpenAI-compatible del agente.
-  # WEBUI_AUTH=false → demo LAN sin login. Rebranding Acme vía WEBUI_NAME.
-  acme-chat:
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: acme-chat
+  # --- GUI agente nativa (fork hermes-webui) ---
+  acme-webui:
+    build:
+      context: .
+      dockerfile: docker/webui/Dockerfile
+    image: acme-hermes-webui:local
+    container_name: acme-webui
     restart: unless-stopped
     depends_on:
       - acme-agent
     ports:
-      - "3000:8080"   # GUI Acme → http://localhost:3000
+      - "8787:8787"
     volumes:
-      - ./data/open-webui:/app/backend/data
+      - ./data/hermes:/home/hermeswebui/.hermes
+      - hermes-agent-src:/home/hermeswebui/.hermes/hermes-agent:ro
+      - ./seed/company-docs:/workspace/docs:ro
     environment:
-      WEBUI_AUTH: "false"
-      WEBUI_NAME: "Acme Maquinaria Especial"
-      ENABLE_SIGNUP: "false"
-      OPENAI_API_BASE_URL: "http://acme-agent:8642/v1"
-      OPENAI_API_KEY: "acme-demo-local-key"
-      ENABLE_OLLAMA_API: "false"
-      ENABLE_OPENAI_API: "true"
-      ANONYMIZED_TELEMETRY: "false"
-      DO_NOT_TRACK: "true"
-      SCARF_NO_ANALYTICS: "true"
-      WEBUI_URL: "http://localhost:3000"
+      HERMES_HOME: /home/hermeswebui/.hermes
+      HERMES_WEBUI_HOST: "0.0.0.0"
+      HERMES_WEBUI_PORT: "8787"
+      HERMES_WEBUI_STATE_DIR: /home/hermeswebui/.hermes/webui
+      HERMES_WEBUI_BOT_NAME: "Asistente Acme"
+      WANTED_UID: ${UID:-1000}
+      WANTED_GID: ${GID:-1000}
+    networks:
+      - acme-net
+
+networks:
+  acme-net:
+    driver: bridge
+
+volumes:
+  hermes-agent-src:

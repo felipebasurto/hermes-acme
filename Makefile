@@ -1,8 +1,8 @@
-# Compose v2 (el plugin moderno). v3 requiere `build` y docker-compose v1 no es
-# compatible con Docker Engine 29. Override: make up DOCKER_COMPOSE="docker compose"
+# Compose v4: acme-agent + acme-webui (hermes-webui fork). Override:
+# make up DOCKER_COMPOSE="docker compose"
 DOCKER_COMPOSE := docker compose
 
-.PHONY: build seed up down setup setup-portal logs health shell
+.PHONY: build seed up down setup setup-portal logs logs-webui logs-agent health shell
 
 build:
 	$(DOCKER_COMPOSE) build
@@ -24,6 +24,12 @@ setup-portal:
 
 logs:
 	$(DOCKER_COMPOSE) logs -f
+
+logs-webui:
+	$(DOCKER_COMPOSE) logs -f acme-webui
+
+logs-agent:
+	$(DOCKER_COMPOSE) logs -f acme-agent
 
 health:
 	./scripts/healthcheck.sh
