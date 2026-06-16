@@ -1054,7 +1054,34 @@ document.addEventListener('DOMContentLoaded', ()=>{
       })
       .catch(()=>acmeApplyRole());
   }catch(_){acmeApplyRole();}
+  setInterval(acmeTranslateRuntimeCopy, 700);
+  acmeTranslateRuntimeCopy();
 });
+
+function acmeTranslateRuntimeCopy(){
+  const replacements=[
+    ['Error: No LLM provider configured. Run `hermes model` to select a provider, or run `hermes setup` for first-time configuration.',
+     'Modelo no configurado. El administrador debe completar Configuración → Proveedor antes de generar borradores.'],
+    ['No LLM provider configured.',
+     'Modelo no configurado.'],
+    ['Run `hermes model` to select a provider, or run `hermes setup` for first-time configuration.',
+     'El administrador debe completar Configuración → Proveedor antes de generar borradores.'],
+    ['Provider details', 'Detalles del proveedor'],
+    ['Setup Required', 'Configuración pendiente'],
+    ['No provider configured', 'Proveedor no configurado']
+  ];
+  try{
+    const walker=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const nodes=[];
+    while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node=>{
+      let text=node.nodeValue;
+      let next=text;
+      replacements.forEach(([from,to])=>{ next=next.split(from).join(to); });
+      if(next!==text) node.nodeValue=next;
+    });
+  }catch(_){}
+}
 
 '''
 panels = replace_once(panels, "const APP_TITLEBAR_KEYS = {", acme_panels_helpers + "\nconst APP_TITLEBAR_KEYS = {", "panels Acme helper insertion")
