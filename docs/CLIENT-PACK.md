@@ -1,36 +1,48 @@
-# Client pack — Acme Agent v4
+# Client pack — Acme Agent v5
 
-Workspace empaquetado para **Acme Maquinaria Especial** (demo/mock).
+Paquete demo para **Acme Maquinaria Especial** (ficticio).
 
 ## Incluido
 
 | Entregable | Descripción |
-|------------|-------------|
-| Stack two-container | `acme-webui` + `acme-agent` |
-| GUI agente | Fork MIT [hermes-webui-acme](https://github.com/felipebasurto/hermes-webui-acme) (build vía `docker/webui/Dockerfile`) |
-| Agente fork | `acme-hermes-agent:local` con parche de marca en assets servidos |
-| Identidad | SOUL.md, AGENTS.md, MEMORY.md |
-| 8 skills | 6 originales + export PDF + escalada María |
-| Corpus | 14 docs ficticios, AC-2024-017 |
-| Verificación | `scripts/verify-branding.sh`, `VERIFICATION.md` |
+|---|---|
+| Stack Docker | `acme-agent` + `acme-webui` |
+| UI industrial | Tema dark acero/ámbar/azul, IBM Plex, radio 4px |
+| Dos perfiles | Administrador y Operador |
+| RBAC | Frontend + backend, operador limitado |
+| Español | Locale forzado `es-ES`, verify dedicado |
+| Corpus | `/workspace/docs` con RFQ, tarifas y AC-2024-017 |
+| Skills | 8 `acme-*` |
+| Demo RFQ | Guion en `DEMO-SCRIPTS.md` |
+| Video | Referencia final en `HANDOFF.md` |
+
+## Cuentas demo
+
+| Perfil | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | `acme-admin-demo` |
+| Operador | `operador` | `acme-user-demo` |
 
 ## Responsabilidades del cliente
 
-1. Credenciales LLM vía `make setup`.
-2. Producción: password webui, VPN/TLS, rotar tokens internos.
-3. Revisión humana de cada BORRADOR (SOUL.md).
-
-## Personalización
-
-- Persona y skills: `seed/` → reseed.
-- Marca GUI: `scripts/patch-webui-branding.sh` + rebuild webui.
-- Tema industrial: paleta en `seed/dashboard-themes/acme.yaml`.
-
-## Licencias
-
-- **Hermes Agent:** MIT (Nous Research). Fork de parche en `Dockerfile`.
-- **Hermes WebUI (GUI):** MIT upstream (nesquena/hermes-webui). Fork Acme sin cláusula de marca Open WebUI. Sin modal de novedades OSS del chatbot anterior.
+1. Configurar proveedor LLM con `make setup` para respuestas reales.
+2. Cambiar credenciales demo antes de producción.
+3. Mantener revisión humana de todo **BORRADOR**.
+4. No publicar el puerto `8642` fuera de red controlada.
 
 ## Fuera de alcance
 
-ERP/MCP, RAG, multi-tenant, envío automático al cliente final.
+- ERP real.
+- Envío automático de ofertas.
+- Datos reales de clientes.
+- Multi-tenant productivo.
+
+## Verificación cliente
+
+```bash
+make build
+make up
+make verify
+```
+
+Esperado: branding y español terminan en `== ALL PASS ==`.
