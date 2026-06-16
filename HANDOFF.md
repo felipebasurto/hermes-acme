@@ -95,8 +95,14 @@ URL: `http://localhost:8787/login`
 
 ## Commit
 
-Último commit funcional antes de este handoff:
+HEAD en `main` tras consolidación v5:
 
 ```text
-f80d557
+e4ea3d0  Merge PR #4 — Acme v5 (UI industrial, RBAC, español)
+```
+
+Video demo (Cloud Agent, no está en el repo):
+
+```text
+/opt/cursor/artifacts/acme-v5-demo-admin-usuario-20260616-v2.mp4
 ```

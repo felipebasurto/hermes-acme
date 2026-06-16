@@ -6,9 +6,9 @@
 # de modo que identificadores funcionales como __HERMES_PLUGIN_SDK__ o variables
 # HERMES_DASHBOARD/HERMES_HOME quedan intactos.
 #
-# Nota: en el despliegue v3 el dashboard de Hermes va DESACTIVADO (la UI de cliente
-# es LibreChat). Este parche es defensa en profundidad y deja grep-cero de
-# "Nous Research" en ui-tui/dist y hermes_cli/web_dist (ver VERIFICATION.md / G2).
+# Nota: en v5 el dashboard Hermes va DESACTIVADO (HERMES_DASHBOARD=0); la UI de
+# cliente es acme-webui (:8787). Este parche es defensa en profundidad en assets
+# servidos del bundle embebido (grep-cero "Nous Research").
 FROM nousresearch/hermes-agent:latest
 
 RUN set -eu; \

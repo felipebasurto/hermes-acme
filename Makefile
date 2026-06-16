@@ -1,4 +1,4 @@
-# Compose v4: acme-agent + acme-webui (hermes-webui fork). Override:
+# Compose v5: acme-agent + acme-webui (industrial, RBAC, es-ES). Override:
 # make up DOCKER_COMPOSE="docker compose"
 DOCKER_COMPOSE := docker compose
 

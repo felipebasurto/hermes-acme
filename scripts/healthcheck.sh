@@ -10,8 +10,8 @@ echo "== Contenedores =="
 $DC ps
 
 echo ""
-echo "== GUI Acme :8787 (hermes-webui fork, demo sin password — expect 200) =="
-curl -s -o /dev/null -w "HTTP %{http_code}\n" --max-time 10 http://localhost:8787/ || true
+echo "== GUI Acme :8787/login (hermes-webui v5, login demo — expect 200) =="
+curl -s -o /dev/null -w "HTTP %{http_code}\n" --max-time 10 http://localhost:8787/login || true
 
 echo ""
 echo "== Agente API OpenAI-compatible :8642/v1/models =="

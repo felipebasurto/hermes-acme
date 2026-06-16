@@ -7,7 +7,7 @@ ROOT="${1:?webui root required}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-ACME_LOGO="${ACME_LOGO:-${REPO_ROOT}/seed/plugins/acme-admin/dashboard/dist/logo.svg}" \
+ACME_LOGO="${ACME_LOGO:-${REPO_ROOT}/seed/assets/logo.svg}" \
   "${SCRIPT_DIR}/patch-webui-branding.sh" "${ROOT}"
 
 cp "${REPO_ROOT}/docker/webui/acme-industrial.css" "${ROOT}/static/acme-industrial.css"

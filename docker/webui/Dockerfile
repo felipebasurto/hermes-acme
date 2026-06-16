@@ -1,7 +1,7 @@
 # acme-hermes-webui:local — MIT fork of nesquena/hermes-webui with Acme branding.
 # Upstream pin: dc90ec9be4f2691a60d2413350405f2758a340a2
 #
-# Build the Lever: clone upstream, apply scripts/patch-webui-branding.sh, bake image.
+# Build the Lever: clone upstream, apply scripts/patch-webui-acme.sh (branding + RBAC + tema).
 
 FROM alpine:3.21 AS source
 RUN apk add --no-cache bash git librsvg python3
@@ -14,7 +14,7 @@ COPY scripts/patch-webui-branding.sh /scripts/patch-webui-branding.sh
 COPY scripts/patch-webui-acme.sh /scripts/patch-webui-acme.sh
 COPY docker/webui/acme-industrial.css /docker/webui/acme-industrial.css
 COPY seed/acme-ui-config.yaml /seed/acme-ui-config.yaml
-COPY seed/plugins/acme-admin/dashboard/dist/logo.svg /acme-logo.svg
+COPY seed/assets/logo.svg /acme-logo.svg
 RUN chmod +x /scripts/patch-webui-branding.sh /scripts/patch-webui-acme.sh \
     && ACME_LOGO=/acme-logo.svg /scripts/patch-webui-acme.sh /src
 

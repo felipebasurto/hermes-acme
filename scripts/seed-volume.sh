@@ -10,7 +10,7 @@ mkdir -p "$DATA/webui"
 
 # Copy seed files into the Hermes data volume. Never overwrite an existing .env
 # (API keys are configured via `make setup` / `hermes setup --portal`).
-rsync -a --exclude='.env' "$SEED/" "$DATA/"
+rsync -a --exclude='.env' --exclude='company-docs/' "$SEED/" "$DATA/"
 
 # Keep internal LAN token aligned between compose and persisted agent config.
 ENV_FILE="$DATA/.env"

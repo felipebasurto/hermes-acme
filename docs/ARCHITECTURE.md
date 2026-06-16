@@ -123,7 +123,7 @@ Restricciones:
 
 ## Build the Lever
 
-`docker/webui/Dockerfile` clona upstream `nesquena/hermes-webui` en el pin v4 y ejecuta:
+`docker/webui/Dockerfile` clona upstream `nesquena/hermes-webui` (pin `dc90ec9`) y ejecuta:
 
 ```bash
 scripts/patch-webui-acme.sh /src

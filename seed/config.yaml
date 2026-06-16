@@ -1,2 +1,3 @@
-dashboard:
-  theme: acme
+# Config agente Hermes (v5)
+# Dashboard desactivado en compose: HERMES_DASHBOARD=0
+# Modelo/proveedor LLM: data/hermes/.env tras make setup
