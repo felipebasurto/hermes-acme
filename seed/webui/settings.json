@@ -1,0 +1,13 @@
+{
+  "default_workspace": "/workspace/docs",
+  "onboarding_completed": true,
+  "language": "es",
+  "theme": "dark",
+  "skin": "acme-industrial",
+  "bot_name": "Asistente Acme",
+  "hidden_tabs": [],
+  "tab_order": [],
+  "show_cli_sessions": false,
+  "show_cron_sessions": false,
+  "show_previous_messaging_sessions": false
+}

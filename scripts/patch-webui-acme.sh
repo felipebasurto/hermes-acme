@@ -302,6 +302,149 @@ config = config.replace(
 )
 write("api/config.py", config)
 
+config = read("api/config.py")
+config = replace_once(
+    config,
+    """def _ensure_workspace_dir(path: Path) -> bool:
+    \"\"\"Best-effort check that a workspace directory exists and is writable.\"\"\"
+    try:
+        path = path.expanduser().resolve()
+        path.mkdir(parents=True, exist_ok=True)
+        return path.is_dir() and os.access(path, os.R_OK | os.W_OK | os.X_OK)
+    except Exception:
+        return False
+""",
+    """def _ensure_workspace_dir(path: Path) -> bool:
+    \"\"\"Best-effort check that a workspace directory exists and is usable.
+
+    Acme v5 mounts ``/workspace/docs`` read-only; accept R+X without write.
+    \"\"\"
+    try:
+        path = path.expanduser().resolve()
+        for env_name in ("HERMES_WEBUI_DEFAULT_WORKSPACE", "ACME_USER_WORKSPACE"):
+            raw = os.getenv(env_name, "").strip()
+            if raw and path == Path(raw).expanduser().resolve():
+                return path.is_dir() and os.access(path, os.R_OK | os.X_OK)
+        path.mkdir(parents=True, exist_ok=True)
+        return path.is_dir() and os.access(path, os.R_OK | os.W_OK | os.X_OK)
+    except Exception:
+        return False
+""",
+    "config ensure workspace readonly corpus",
+)
+write("api/config.py", config)
+
+
+# ── api/workspace.py: trust Acme corpus + default to /workspace/docs ─────────
+workspace = read("api/workspace.py")
+if "def _acme_trusted_workspace_paths()" not in workspace:
+    workspace = replace_once(
+        workspace,
+        "def resolve_trusted_workspace(path: str | Path | None = None) -> Path:",
+        """def _acme_trusted_workspace_paths() -> list[str]:
+    paths: list[str] = []
+    for raw in (
+        os.getenv("ACME_USER_WORKSPACE", ""),
+        os.getenv("HERMES_WEBUI_DEFAULT_WORKSPACE", ""),
+        "/workspace/docs",
+        "/workspace",
+    ):
+        raw = str(raw or "").strip()
+        if raw and raw not in paths:
+            paths.append(raw)
+    return paths
+
+
+def _acme_docs_workspace_path() -> str:
+    for raw in _acme_trusted_workspace_paths():
+        p = Path(raw).expanduser()
+        if p.is_dir():
+            return str(p.resolve())
+    return "/workspace/docs"
+
+
+def resolve_trusted_workspace(path: str | Path | None = None) -> Path:""",
+        "workspace acme helpers",
+    )
+
+workspace = replace_once(
+    workspace,
+    """    raise ValueError(
+        f"Path is outside the user home directory, not in the saved workspace "
+        f"list, and not under the default workspace: {candidate}. "
+        f"Add it via Settings → Workspaces first."
+    )
+""",
+    """    # (D) Acme v5: trust configured corpus mounts (often read-only :ro).
+    for raw in _acme_trusted_workspace_paths():
+        root = Path(raw).expanduser().resolve()
+        if not root.is_dir():
+            continue
+        if candidate == root:
+            return candidate
+        try:
+            candidate.relative_to(root)
+            return candidate
+        except ValueError:
+            pass
+        try:
+            root.relative_to(candidate)
+            return candidate
+        except ValueError:
+            pass
+
+    raise ValueError(
+        f"Path is outside the user home directory, not in the saved workspace "
+        f"list, and not under the default workspace: {candidate}. "
+        f"Add it via Settings → Workspaces first."
+    )
+""",
+    "workspace acme trust roots",
+)
+
+workspace = replace_once(
+    workspace,
+    """    return _profile_default_workspace()
+
+
+def set_last_workspace(path: str) -> None:
+""",
+    """    acme_docs = _acme_docs_workspace_path()
+    if acme_docs:
+        return acme_docs
+    return _profile_default_workspace()
+
+
+def set_last_workspace(path: str) -> None:
+""",
+    "workspace acme last fallback",
+)
+
+if "import os" not in workspace.split("def _acme_trusted_workspace_paths", 1)[0]:
+    workspace = workspace.replace("from pathlib import Path", "import os\nfrom pathlib import Path", 1)
+
+workspace = replace_once(
+    workspace,
+    """        if Path(raw).is_dir():
+            return raw
+        return None
+
+    lw_file = _last_workspace_file()
+""",
+    """        if Path(raw).is_dir():
+            acme_docs = _acme_docs_workspace_path()
+            if acme_docs and raw.strip() in {"/workspace", str(Path.home() / "workspace")}:
+                return acme_docs
+            return raw
+        return None
+
+    lw_file = _last_workspace_file()
+""",
+    "workspace acme coerce stale last",
+)
+
+write("api/workspace.py", workspace)
+
 
 # ── api/routes.py: login, auth status, RBAC, reduced usuario workspace ───────
 routes = read("api/routes.py")
@@ -360,6 +503,8 @@ routes = routes.replace('_lang = _settings.get("language", "en")', '_lang = os.g
 
 acme_routes_helpers = r'''
 # ── Acme v5 demo RBAC helpers ────────────────────────────────────────────────
+from pathlib import Path
+
 _ACME_USUARIO_WORKSPACE = os.getenv("ACME_USER_WORKSPACE", "/workspace/docs")
 _ACME_SESSION_OWNERS_FILE = STATE_DIR / "acme-session-owners.json"
 
@@ -474,20 +619,36 @@ def _acme_usuario_settings(settings: dict) -> dict:
     return safe
 
 
-def _acme_usuario_workspaces_payload() -> dict:
-    return {
-        "workspaces": [
+def _acme_workspaces_payload(*, admin: bool = False) -> dict:
+    docs_path = _ACME_USUARIO_WORKSPACE
+    workspaces = [
+        {
+            "name": "Documentación Acme",
+            "path": docs_path,
+            "is_default": True,
+            "readonly": True,
+        }
+    ]
+    if admin:
+        draft_path = str(Path.home() / "workspace")
+        workspaces.append(
             {
-                "name": "Documentación Acme",
-                "path": _ACME_USUARIO_WORKSPACE,
-                "is_default": True,
-                "readonly": True,
+                "name": "Borradores OT",
+                "path": draft_path,
+                "is_default": False,
+                "readonly": False,
             }
-        ],
-        "last": _ACME_USUARIO_WORKSPACE,
+        )
+    return {
+        "workspaces": workspaces,
+        "last": docs_path,
         "terminal_remote_backend": _terminal_remote_backend_enabled(),
-        "readonly": True,
+        "readonly": not admin,
     }
+
+
+def _acme_usuario_workspaces_payload() -> dict:
+    return _acme_workspaces_payload(admin=False)
 
 
 def _acme_load_session_owners() -> dict:
@@ -583,17 +744,10 @@ routes = replace_once(
 """,
     """    if parsed.path == "/api/workspaces":
         if _acme_is_usuario(handler):
-            return j(handler, _acme_usuario_workspaces_payload())
-        return j(
-            handler,
-            {
-                "workspaces": load_workspaces(),
-                "last": get_last_workspace(),
-                "terminal_remote_backend": _terminal_remote_backend_enabled(),
-            },
-        )
+            return j(handler, _acme_workspaces_payload(admin=False))
+        return j(handler, _acme_workspaces_payload(admin=True))
 """,
-    "routes workspaces usuario payload",
+    "routes workspaces acme payload",
 )
 
 routes = replace_once(
