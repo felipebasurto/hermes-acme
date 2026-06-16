@@ -20,7 +20,7 @@ check_contains() {
   local label="$1"
   local content="$2"
   local pattern="$3"
-  if echo "$content" | grep -iE "$pattern" >/dev/null 2>&1; then
+  if grep -iE "$pattern" >/dev/null 2>&1 <<<"$content"; then
     pass "[$label] contiene: $pattern"
   else
     fail "[$label] falta: $pattern"
@@ -31,9 +31,9 @@ check_absent() {
   local label="$1"
   local content="$2"
   local pattern="$3"
-  if echo "$content" | grep -iE "$pattern" >/dev/null 2>&1; then
+  if grep -iE "$pattern" >/dev/null 2>&1 <<<"$content"; then
     fail "[$label] inglés visible detectado: $pattern"
-    echo "$content" | grep -oiE "$pattern" | sort -u | head -8
+    grep -oiE "$pattern" <<<"$content" | sort -u | head -8
   else
     pass "[$label] sin inglés visible: $pattern"
   fi
@@ -51,7 +51,7 @@ LOGIN_BODY=$(curl -sf --max-time 10 -c "$COOKIE_JAR" \
   -H 'Content-Type: application/json' \
   -d '{"username":"admin","password":"acme-admin-demo"}' \
   "${BASE_URL}/api/auth/login" || true)
-if echo "$LOGIN_BODY" | grep -q '"role"[[:space:]]*:[[:space:]]*"admin"'; then
+if grep -q '"role"[[:space:]]*:[[:space:]]*"admin"' <<<"$LOGIN_BODY"; then
   pass "[auth] login admin correcto"
 else
   fail "[auth] login admin falló"
