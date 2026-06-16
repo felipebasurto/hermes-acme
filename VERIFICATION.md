@@ -1,78 +1,99 @@
-# Verificación — Acme Hermes (white-label v2)
+# Verificación — Acme Agent v3
 
-Ejecutar desde la raíz tras `make up`. Demo **sin login**.
+Evidencia capturada el 2026-06-15 (UTC) sobre el stack en ejecución. Comandos
+reproducibles abajo. Chat con modelo = **SKIPPED** (sin API key en la VM; ver G6).
 
-## Antes / después (white-label)
+## Antes / después (v2 dashboard → v3 GUI)
 
-| Aspecto | Antes (Hermes/Nous) | Después (Acme) |
-|---------|---------------------|----------------|
-| Login | Basic auth `acme`/`changeme` | Sin login (demo LAN, `INSECURE=1`) |
-| Marca cabecera | Wordmark "Hermes Agent" | Logo Acme + "MAQUINARIA ESPECIAL · BURGOS" |
-| Pie barra lateral | Enlace "Nous Research" | Oculto (cero Nous visible) |
-| Selector de temas | Visible (Hermes Teal, Nous Blue, …) | Oculto; tema `acme` único/activo |
-| Navegación | ~19 pestañas (Models, Logs, Cron, MCP, Kanban, …) | Chat, Sesiones, Skills, Docs, Config |
-| Sección "Plugins" | Achievements, Kanban | Oculta |
-| Skills | ~73 del bundle + 3 Acme | Solo 3 Acme |
-| Título/favicon navegador | "Hermes Agent - Dashboard" / favicon Hermes | "Acme Maquinaria Especial — Panel" / favicon Acme |
-| Banner API server | "Api_server disconnected" (rojo) | Sin banner (API off hasta `make setup`) |
+| Aspecto | v2 (dashboard Hermes) | v3 (GUI Acme) |
+|---------|------------------------|---------------|
+| Superficie de cliente | Dashboard Hermes con xterm embebido | GUI web de chat Open WebUI, sin terminal |
+| Marca del chat | Banner TUI "HERMES-AGENT / Nous Research" (hardcodeado, irresoluble sin fork) | "Acme Maquinaria Especial", modelo `acme-agent` |
+| Login | Sin login (INSECURE) | Sin login (`WEBUI_AUTH=false`) |
+| Imagen | `nousresearch/hermes-agent:latest` | `acme-hermes-agent:local` (fork de parche) |
+| Marca en assets servidos | "Nous Research" presente en ui-tui/dist y web_dist | grep-cero en ambos |
+| Skills | 6 acme-* | 6 acme-* (sin cambios) |
 
-## Infra y white-label (sin API key)
+## G1 — GUI de chat (PASS)
 
 ```bash
-# Panel sin login (espera 200, no 302):
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:9119/                 # 200
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/      # 200
+```
+GUI carga sin login (`WEBUI_AUTH=false`), es chat web (no terminal), marca
+"Acme Maquinaria Especial", selector de modelo `acme-agent`. Evidencia:
+capturas `v3_gui_acme_chat.webp` y `v3_gui_rfq_sent.webp`.
 
-# Auth desactivada:
-curl -s http://localhost:9119/api/status | python3 -m json.tool                 # auth_required:false, auth_providers:[]
+## G2 — Fork con marca parcheada (PASS)
 
-# Tema Acme activo:
-curl -s http://localhost:9119/api/dashboard/themes | python3 -c \
-  "import sys,json;print(json.load(sys.stdin)['active'])"                        # acme
+```bash
+make build   # -> acme-hermes-agent:local (la build aborta si queda "Nous Research")
+docker exec acme-agent grep -rI "Nous Research" /opt/hermes/ui-tui/dist /opt/hermes/hermes_cli/web_dist | wc -l   # 0
+docker exec acme-agent grep -rI "Messenger of the Digital Gods" /opt/hermes/ui-tui/dist /opt/hermes/hermes_cli/web_dist | wc -l   # 0
+```
+Resultado: `acme-hermes-agent:local` (3.31 GB) construida; conteos = **0** y **0**.
+compose usa la imagen local (no `nousresearch/...:latest`).
 
-# Plugin acme-admin descubierto (source user):
-curl -s http://localhost:9119/api/dashboard/plugins                             # incluye {"name":"acme-admin","source":"user"}
+## G3 — White-label 100% en superficies de cliente (PASS)
 
-# Logo Acme servido (ruta de assets de plugin):
-curl -s -o /dev/null -w "%{http_code} %{content_type}\n" \
-  http://localhost:9119/dashboard-plugins/acme-admin/dist/logo.svg              # 200 image/svg+xml
+```bash
+curl -s http://localhost:3000/ | grep -iE 'hermes|nous|nousresearch' && echo FAIL || echo PASS   # PASS (none)
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:9119/ || echo "no expuesto"            # 000 (dashboard OFF) -> PASS
+```
+- GUI primaria (`:3000`): sin cadenas `hermes|nous`. PASS.
+- Dashboard secundario (`:9119`): **no expuesto** (`HERMES_DASHBOARD=0`). PASS.
+- Residual documentado: el modal de "novedades" de Open WebUI de primer arranque muestra texto upstream una sola vez (atribución OSS exigida por licencia); se descarta con "Okay, Let's Go!" y el nombre visible de la app es Acme.
 
-# Solo skills Acme en el volumen:
-ls data/hermes/skills/                                                          # acme-checklist-cierre / acme-memoria-proyectos / acme-rfq-a-oferta
-ls data/hermes/.no-bundled-skills                                               # marcador presente
+## G4 — Skills + corpus (PASS)
 
-# Corpus montado (solo lectura):
-make shell  # -> ls /workspace/docs   (14 ficheros)
+```bash
+make down && sudo rm -rf data/hermes && make up
+sudo ls data/hermes/skills/      # 6 dirs acme-*
+sudo test -f data/hermes/.no-bundled-skills && echo present
+```
+Resultado: `acme-calculo-margen acme-checklist-cierre acme-memoria-proyectos
+acme-redactar-seccion-tecnica acme-rfq-a-oferta acme-validar-plazo` (6) + marcador
+presente. Cero skills del bundle. Corpus: 14 ficheros en `seed/company-docs/`,
+faro `proyecto-AC-2024-017.md`, RFQ en `rfq/ejemplo-entrada-001.txt`.
+
+## G6 — Verificación end-to-end
+
+| Check | Resultado |
+|-------|-----------|
+| `make build` produce imagen local | PASS (`acme-hermes-agent:local`, 3.31 GB) |
+| Contenedores arriba | PASS (`acme-agent` Up, `acme-chat` healthy) |
+| GUI :3000 HTTP 200 + marca Acme | PASS |
+| Dashboard :9119 no expuesto | PASS (000) |
+| Scan forbidden `hermes|nous` en URL de cliente | PASS (0) |
+| grep-cero "Nous Research" en assets servidos | PASS (0) |
+| Skills = solo acme-* (6) | PASS |
+| `/v1/models` anuncia `acme-agent` | PASS |
+| **Chat RFQ → borrador** | **SKIPPED — sin API key en la VM** |
+
+### Wire del chat (prueba sin modelo)
+
+```bash
+curl -s -X POST http://localhost:8642/v1/chat/completions \
+  -H "Authorization: Bearer acme-demo-local-key" -H "Content-Type: application/json" \
+  -d '{"model":"acme-agent","messages":[{"role":"user","content":"hola"}]}'
+```
+Devuelve error OpenAI-format: *"No inference provider configured. Run 'hermes model' ... or set an API key (OPENROUTER_API_KEY, OPENAI_API_KEY, ...) in ~/.hermes/.env."* Esto **prueba que la GUI/agente están cableados correctamente**; solo falta la key del modelo (la aporta el cliente con `make setup`). Por eso el chat queda SKIPPED, no FAIL.
+
+## Cómo reproducir todo
+
+```bash
+make build
+make up
+make health
+# branding
+curl -s http://localhost:3000/ | grep -iE 'hermes|nous' && echo FAIL || echo PASS
+docker exec acme-agent grep -rI "Nous Research" /opt/hermes/ui-tui/dist /opt/hermes/hermes_cli/web_dist | wc -l
+# skills
+sudo ls data/hermes/skills/
+# chat (requiere make setup con API key)
 ```
 
-Resultados de referencia (capturados en este despliegue): `GET / → 200`;
-`auth_required:false`, `auth_providers:[]`, `gateway_platforms:[]`;
-`themes.active = acme`; plugins = `acme-admin (user)`, achievements/kanban (bundled, pestañas ocultas);
-skills = solo las 3 Acme.
+## Registro
 
-## Prueba de chat / RFQ (requiere modelo)
-
-El chat acepta y **encola** el mensaje sin modelo, mostrando
-"Setup Required — Hermes needs a model provider". Tras `make setup` (key del
-cliente en `data/hermes/.env`):
-
-1. Abrir http://localhost:9119 → Chat.
-2. Pegar la RFQ de `seed/company-docs/rfq/ejemplo-entrada-001.txt`.
-3. Esperar **BORRADOR** con referencia AC, cita de `AC-2024-017`, secciones de la plantilla v3 y margen ≥ 18 %.
-
-> Sin key no se genera el borrador (es acción del cliente: `make setup`). Todo lo demás se verifica arriba sin key.
-
-### Residual conocido en el chat (límite "sin fork")
-
-El chat embebido es la TUI del agente (xterm.js). Su splash de inicio muestra el
-arte "HERMES-AGENT" y la línea "Nous Research · Messenger of the Digital Gods",
-**hardcodeados** en el build de la TUI (`branding.tsx`). No son alcanzables por
-temas/plugins del dashboard ni por skins de la CLI (solo un fork los quitaría,
-prohibido). Es del estado inactivo/"setup required"; tras `make setup`, al iniciar
-conversación el borrador llena el terminal y el banner sube fuera de vista. Ver
-HANDOFF.md → "Residuales conocidos".
-
-## Registro de evidencia
-
-| Fecha | Operador | make up | sin login | tema acme | solo skills Acme | chat RFQ (tras setup) |
-|-------|----------|---------|-----------|-----------|------------------|------------------------|
-| | | | | | | |
+| Fecha (UTC) | make build | make up | GUI 200 | scan PASS | grep-0 | skills 6 | chat |
+|-------------|-----------|---------|---------|-----------|--------|----------|------|
+| 2026-06-15T22:15Z | PASS | PASS | PASS | PASS | PASS | PASS | SKIPPED (no key) |

@@ -1,29 +1,54 @@
 services:
-  acme-hermes:
-    image: nousresearch/hermes-agent:latest
-    container_name: acme-hermes
+  # --- Agente Hermes headless (backend, sin UI de cliente) ---
+  # Imagen fork local (ver Dockerfile): marca upstream parcheada en assets servidos.
+  # Dashboard DESACTIVADO (HERMES_DASHBOARD=0): el cliente nunca ve la TUI/xterm.
+  # Expone API OpenAI-compatible en :8642/v1 que ejecuta al agente (skills, RFQ).
+  acme-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: acme-hermes-agent:local
+    container_name: acme-agent
     restart: unless-stopped
     command: gateway run
     ports:
-      - "8642:8642"
-      - "9119:9119"
+      - "8642:8642"   # API OpenAI-compatible (publicado para debug/verificación)
     volumes:
       - ./data/hermes:/opt/data
       - ./seed/company-docs:/workspace/docs:ro
     environment:
-      HERMES_DASHBOARD: "1"
-      # Demo LAN sin login. El gate de auth de Hermes solo se activa si se
-      # registra un proveedor (p.ej. BASIC_AUTH_*); sin proveedor, un bind a
-      # 0.0.0.0 exige --insecure (HERMES_DASHBOARD_INSECURE=1) o falla cerrado.
-      # En produccion: detras de VPN/SSO/reverse proxy. Ver docs/RUNBOOK.md.
-      HERMES_DASHBOARD_INSECURE: "1"
-      # API gateway REST opcional: off hasta que el cliente anada API_SERVER_KEY
-      # en `make setup`. Mantenerlo on sin key deja el banner "Api_server
-      # disconnected" en el dashboard. Activar: API_SERVER_ENABLED=true +
-      # API_SERVER_KEY=<...> en data/hermes/.env.
-      API_SERVER_ENABLED: "false"
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-          cpus: "2.0"
+      HERMES_DASHBOARD: "0"
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: "0.0.0.0"
+      # Token interno LAN entre la GUI y el agente (NO es una API key de LLM).
+      # Rotar en producción. La key del modelo va en data/hermes/.env (make setup).
+      API_SERVER_KEY: "acme-demo-local-key"
+      # Nombre de modelo anunciado en /v1/models (lo que ve el cliente en el
+      # selector de la GUI). Evita exponer "hermes-agent".
+      API_SERVER_MODEL_NAME: "acme-agent"
+
+  # --- GUI de chat para administrativos (superficie de cliente) ---
+  # Open WebUI (OSS) apuntando al endpoint OpenAI-compatible del agente.
+  # WEBUI_AUTH=false → demo LAN sin login. Rebranding Acme vía WEBUI_NAME.
+  acme-chat:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: acme-chat
+    restart: unless-stopped
+    depends_on:
+      - acme-agent
+    ports:
+      - "3000:8080"   # GUI Acme → http://localhost:3000
+    volumes:
+      - ./data/open-webui:/app/backend/data
+    environment:
+      WEBUI_AUTH: "false"
+      WEBUI_NAME: "Acme Maquinaria Especial"
+      ENABLE_SIGNUP: "false"
+      OPENAI_API_BASE_URL: "http://acme-agent:8642/v1"
+      OPENAI_API_KEY: "acme-demo-local-key"
+      ENABLE_OLLAMA_API: "false"
+      ENABLE_OPENAI_API: "true"
+      ANONYMIZED_TELEMETRY: "false"
+      DO_NOT_TRACK: "true"
+      SCARF_NO_ANALYTICS: "true"
+      WEBUI_URL: "http://localhost:3000"
