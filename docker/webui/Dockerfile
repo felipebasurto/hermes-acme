@@ -4,7 +4,7 @@
 # Build the Lever: clone upstream, apply scripts/patch-webui-branding.sh, bake image.
 
 FROM alpine:3.21 AS source
-RUN apk add --no-cache bash git librsvg
+RUN apk add --no-cache bash git librsvg python3
 WORKDIR /src
 ARG HERMES_WEBUI_SHA=dc90ec9be4f2691a60d2413350405f2758a340a2
 RUN git clone --depth 50 https://github.com/nesquena/hermes-webui.git . \
